@@ -3,34 +3,6 @@
 # Módulo de configuración de VS Code
 # Compatible con macOS, Linux, WSL, Windows
 
-# Colores para output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-NC='\033[0m' # No Color
-
-# Funciones de logging (incluidas localmente para independencia)
-show_success() {
-    echo -e "${GREEN}✅ $1${NC}"
-}
-show_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
-}
-show_error() {
-    echo -e "${RED}❌ $1${NC}"
-}
-show_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
-}
-show_step() {
-    echo -e "${PURPLE}🔧 $1${NC}"
-}
-show_status() {
-    echo -e "${GREEN}✅ $1${NC}"
-}
-
 # Función de compatibilidad para head -n -1 (eliminar última línea)
 remove_last_line() {
     local file="$1"
@@ -45,44 +17,6 @@ remove_last_line() {
     fi
 }
 
-# Nueva función para instalar extensiones desde VSIX (para macOS)
-install_extension_vsix() {
-    local ext_id="$1"
-    local publisher=$(echo "$ext_id" | cut -d. -f1)
-    local name=$(echo "$ext_id" | cut -d. -f2)
-    local vsix_url="https://marketplace.visualstudio.com/_apis/public/gallery/publishers/${publisher}/vsextensions/${name}/latest/vspackage"
-    local vsix_file="/tmp/${name}.vsix"
-    local max_attempts=2
-    local attempt=1
-
-    while [[ $attempt -le $max_attempts ]]; do
-        show_info "📦 Descargando VSIX para $ext_id (intento $attempt/$max_attempts)..."
-
-        # Descargar el VSIX con curl
-        if curl -L "$vsix_url" -o "$vsix_file" --silent --fail; then
-            show_info "   ↳ Instalando desde archivo VSIX..."
-
-            # Instalar desde el archivo VSIX descargado
-            if timeout 60 code --install-extension "$vsix_file" --force 2>/dev/null; then
-                show_success "✅ $ext_id instalado correctamente vía VSIX"
-                rm "$vsix_file" # Limpiar el archivo descargado
-                return 0
-            else
-                show_warning "⚠️  Error instalando VSIX para $ext_id"
-            fi
-        else
-            show_warning "⚠️  Error descargando VSIX para $ext_id"
-        fi
-
-        ((attempt++))
-        [[ $attempt -le $max_attempts ]] && show_info "⏳ Esperando 3 segundos..." && sleep 3
-    done
-
-    show_error "❌ No se pudo instalar $ext_id vía VSIX después de $max_attempts intentos"
-    rm -f "$vsix_file" # Asegurarse de limpiar
-    return 1
-}
-
 # Detección de problemas de VS Code en macOS
 detect_vscode_macos_issues() {
     if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -91,70 +25,6 @@ detect_vscode_macos_issues() {
         return 0
     fi
     return 1
-}
-
-# Funciones robustas para manejar crashes de VS Code en macOS
-code_list_extensions_safe() {
-    local max_attempts=3
-    local attempt=1
-
-    while [[ $attempt -le $max_attempts ]]; do
-        if timeout 30 code --list-extensions 2>/dev/null; then
-            return 0
-        else
-            show_warning "⚠️ VS Code crash detectado (intento $attempt/$max_attempts)"
-            ((attempt++))
-            [[ $attempt -le $max_attempts ]] && sleep 2
-        fi
-    done
-
-    show_error "❌ VS Code presenta crashes persistentes en macOS"
-    show_info "💡 Esto es un problema conocido de Electron Framework"
-    return 1
-}
-
-code_install_extension_safe() {
-    local ext="$1"
-
-    # En macOS, usar siempre el método VSIX que es más robusto
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        install_extension_vsix "$ext"
-        return $?
-    fi
-
-    # Para otros sistemas (Linux/WSL), usar el método original
-    local max_attempts=3
-    local attempt=1
-
-    while [[ $attempt -le $max_attempts ]]; do
-        show_info "📦 Instalando $ext (intento $attempt/$max_attempts)..."
-
-        if timeout 60 code --install-extension "$ext" --force 2>/dev/null; then
-            show_success "✅ $ext instalado correctamente"
-            return 0
-        else
-            show_warning "⚠️ Crash o error instalando $ext"
-            ((attempt++))
-            [[ $attempt -le $max_attempts ]] && show_info "⏳ Esperando 3 segundos..." && sleep 3
-        fi
-    done
-
-    show_error "❌ No se pudo instalar $ext después de $max_attempts intentos"
-    return 1
-}
-
-extension_already_installed() {
-    local ext="$1"
-    local extensions_list
-
-    # Intentar obtener lista de extensiones de forma segura
-    extensions_list=$(code_list_extensions_safe)
-    if [[ $? -eq 0 ]]; then
-        echo "$extensions_list" | grep -q "^$ext$"
-    else
-        # Si no se puede obtener la lista, asumir que no está instalada
-        return 1
-    fi
 }
 
 # Instalación manual de extensiones para macOS problemático
@@ -186,14 +56,6 @@ install_extensions_manual_mode() {
     show_info "🔗 5. GitLens"
     show_info "   → Busca: 'GitLens — Git supercharged'"
     show_info "   → Publisher: eamodio"
-    echo ""
-    show_info "🎨 6. Material Icon Theme"
-    show_info "   → Busca: 'Material Icon Theme'"
-    show_info "   → Publisher: pkief"
-    echo ""
-    show_info "💻 7. TypeScript Next"
-    show_info "   → Busca: 'JavaScript and TypeScript Nightly'"
-    show_info "   → Publisher: ms-vscode"
     echo ""
 
     show_info "📝 INSTRUCCIONES:"
@@ -269,61 +131,25 @@ install_vscode_extensions() {
 
     # Detectar si estamos en macOS con problemas
     if detect_vscode_macos_issues; then
-        # Usar sistema anti-crash para macOS
-        local installed=0
-        local failed=0
+        # Intentar instalar solo Spanish Language Pack
+        show_info "🌍 Intentando instalar Spanish Language Pack..."
 
-        # PASO 1: Instalar Spanish Language Pack PRIMERO (crítico)
-        local spanish_ext="ms-ceintl.vscode-language-pack-es"
-        show_info "🌍 PRIORIDAD: Instalando Spanish Language Pack..."
+        if timeout 30 code --install-extension "ms-ceintl.vscode-language-pack-es" --force 2>/dev/null; then
+            show_success "✅ Spanish Language Pack instalado correctamente"
 
-        if ! extension_already_installed "$spanish_ext"; then
-            if code_install_extension_safe "$spanish_ext"; then
-                ((installed++))
-                show_success "✅ Spanish Language Pack instalado con sistema anti-crash"
+            # Configurar idioma
+            local locale_file="$VSCODE_SETTINGS_DIR/locale.json"
+            mkdir -p "$VSCODE_SETTINGS_DIR"
+            echo '{"locale":"es"}' > "$locale_file"
+            show_success "✅ Configuración de idioma creada"
 
-                # Configurar idioma inmediatamente
-                local locale_file="$VSCODE_SETTINGS_DIR/locale.json"
-                mkdir -p "$VSCODE_SETTINGS_DIR"
-                echo '{"locale":"es"}' > "$locale_file"
-                show_success "✅ Configuración de idioma creada"
-            else
-                show_warning "⚠️ Spanish Language Pack falló con sistema anti-crash"
-                ((failed++))
-            fi
+            show_info "💡 Reinicia VS Code para ver la interfaz en español"
+            show_info "🔌 Para las demás extensiones, usa el modo manual..."
+
+            # Mostrar instrucciones para el resto
+            install_extensions_manual_mode
         else
-            show_info "✅ Spanish Language Pack ya está instalado"
-        fi
-
-        # PASO 2: Intentar instalar extensiones esenciales con anti-crash
-        local essential_extensions=(
-            "esbenp.prettier-vscode"
-            "dbaeumer.vscode-eslint"
-            "ritwickdey.liveserver"
-            "eamodio.gitlens"
-            "pkief.material-icon-theme"
-            "ms-vscode.vscode-typescript-next"
-        )
-
-        show_info "📦 Instalando extensiones esenciales con sistema anti-crash..."
-        for ext in "${essential_extensions[@]}"; do
-            if ! extension_already_installed "$ext"; then
-                if code_install_extension_safe "$ext"; then
-                    ((installed++))
-                else
-                    show_warning "❌ $ext falló con anti-crash"
-                    ((failed++))
-                fi
-            else
-                show_info "✅ $ext ya está instalada"
-            fi
-        done
-
-        show_status "📊 Resultado macOS: $installed instaladas, $failed errores"
-
-        # Si hay muchos errores, mostrar modo manual
-        if [[ $failed -gt 2 ]]; then
-            show_warning "⚠️ Múltiples errores detectados, mostrando modo manual..."
+            show_warning "⚠️ Spanish Language Pack falló, pasando a modo manual completo"
             install_extensions_manual_mode
         fi
 
@@ -334,16 +160,17 @@ install_vscode_extensions() {
     local installed=0
     local failed=0
 
-    show_info "🐧 Sistema no-macOS: Instalación normal de extensiones"
     for ext in "${extensions[@]}"; do
-        if ! extension_already_installed "$ext"; then
-            if code_install_extension_safe "$ext"; then
+        if ! code --list-extensions | grep -q "^$ext$"; then
+            show_info "Instalando $ext..."
+            if code --install-extension "$ext" --force; then
                 ((installed++))
             else
+                show_warning "Error instalando $ext"
                 ((failed++))
             fi
         else
-            show_info "✅ $ext ya está instalada"
+            show_info "$ext ya está instalada"
         fi
     done
 
@@ -356,47 +183,13 @@ install_vscode_extensions() {
 configure_spanish_language() {
     show_step "Configurando idioma español en VS Code..."
 
-    # Verificar si la extensión de idioma español está instalada
-    if code --list-extensions 2>/dev/null | grep -q "ms-ceintl.vscode-language-pack-es"; then
-        show_success "✅ Extensión de idioma español encontrada"
+    # Crear archivo locale.json para forzar el idioma
+    local locale_file="$VSCODE_SETTINGS_DIR/locale.json"
+    mkdir -p "$VSCODE_SETTINGS_DIR"
+    echo '{"locale":"es"}' > "$locale_file"
+    show_success "Configuración de locale creada: locale.json"
 
-        # Crear archivo locale.json para forzar el idioma
-        local locale_file="$VSCODE_SETTINGS_DIR/locale.json"
-        mkdir -p "$VSCODE_SETTINGS_DIR"
-        echo '{"locale":"es"}' > "$locale_file"
-        show_success "Configuración de locale creada: locale.json"
-
-        show_info "💡 Reinicia VS Code para ver la interfaz en español"
-    else
-        show_warning "⚠️ Extensión de idioma español no encontrada"
-        show_info "🔄 Intentando instalación con mayor prioridad..."
-
-        # Intentar instalación específica para idioma
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            # En macOS usar sistema anti-crash
-            code_install_extension_safe "ms-ceintl.vscode-language-pack-es"
-        else
-            # En otros sistemas instalación normal
-            timeout 60 code --install-extension ms-ceintl.vscode-language-pack-es --force
-        fi
-
-        if [[ $? -eq 0 ]]; then
-            # Configurar después de instalación exitosa
-            local locale_file="$VSCODE_SETTINGS_DIR/locale.json"
-            mkdir -p "$VSCODE_SETTINGS_DIR"
-            echo '{"locale":"es"}' > "$locale_file"
-            show_success "✅ Spanish Language Pack instalado y configurado"
-            show_info "💡 Reinicia VS Code para ver los cambios"
-        else
-            show_error "❌ No se pudo instalar Spanish Language Pack"
-            show_info "📋 Instalación manual requerida:"
-            show_info "   1. Abre VS Code"
-            show_info "   2. Ctrl+Shift+P → 'Extensions: Install Extensions'"
-            show_info "   3. Busca: 'Spanish Language Pack'"
-            show_info "   4. Instala: 'Spanish Language Pack for Visual Studio Code'"
-            show_info "   5. Reinicia VS Code"
-        fi
-    fi
+    show_info "💡 Reinicia VS Code para ver la interfaz en español"
 }
 
 configure_vscode_settings() {

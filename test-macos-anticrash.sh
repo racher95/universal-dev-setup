@@ -111,16 +111,16 @@ show_step "7. Probando VS Code (si está disponible)"
 
 if command -v code &> /dev/null; then
     show_success "VS Code encontrado en PATH"
-    
+
     # Intentar listar extensiones
     show_info "Probando comando básico de VS Code..."
     if timeout 10 code --list-extensions > /dev/null 2>&1; then
         show_success "VS Code responde correctamente"
-        
+
         # Contar extensiones actuales
         local ext_count=$(code --list-extensions 2>/dev/null | wc -l || echo "0")
         show_info "Extensiones actuales instaladas: $ext_count"
-        
+
         # Verificar si Spanish Language Pack está instalado
         if code --list-extensions 2>/dev/null | grep -q "ms-ceintl.vscode-language-pack-es"; then
             show_success "Spanish Language Pack YA está instalado"

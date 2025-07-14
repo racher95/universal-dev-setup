@@ -3,6 +3,7 @@
 ## Problema Original
 
 En macOS, VS Code tiene problemas conocidos con el **Electron Framework** que causan:
+
 - ❌ Crashes al instalar extensiones via CLI (`code --install-extension`)
 - ❌ Timeouts y procesos colgados
 - ❌ Instalación de 0 extensiones con múltiples errores
@@ -13,22 +14,26 @@ En macOS, VS Code tiene problemas conocidos con el **Electron Framework** que ca
 ### 🔧 Funciones Anti-Crash
 
 #### 1. `detect_vscode_macos_issues()`
+
 - Detecta automáticamente si estamos en macOS
 - Muestra advertencias preventivas
 - Activa el modo anti-crash
 
 #### 2. `code_list_extensions_safe()`
+
 - Lista extensiones con timeout y reintentos
 - Maneja crashes de Electron Framework
 - 3 intentos máximo con pausa entre reintentos
 
 #### 3. `code_install_extension_safe()`
+
 - Instala extensiones con timeout de 60 segundos
 - Sistema de 3 reintentos automáticos
 - Detección de crashes y manejo de errores
 - Pausas entre reintentos para estabilizar
 
 #### 4. `extension_already_installed()`
+
 - Verifica si una extensión ya está instalada
 - Usa `code_list_extensions_safe()` para evitar crashes
 - Fallback seguro si no se puede verificar
@@ -67,6 +72,7 @@ install_extensions_manual_mode() {
 ## 🧪 Testing
 
 ### Ejecutar Pruebas
+
 ```bash
 # Prueba completa del sistema anti-crash
 ./test-macos-anticrash.sh
@@ -76,6 +82,7 @@ install_extensions_manual_mode() {
 ```
 
 ### Verificación Manual
+
 ```bash
 # En macOS, verificar detección
 [[ "$OSTYPE" == "darwin"* ]] && echo "macOS detectado"
@@ -90,11 +97,13 @@ code --list-extensions | grep "ms-ceintl.vscode-language-pack-es"
 ## 📊 Métricas de Éxito
 
 ### Antes (Problema Original)
+
 - ❌ 0 extensiones instaladas
 - ❌ 25 errores de crash
 - ❌ 100% tasa de fallo
 
 ### Después (Con Anti-Crash)
+
 - ✅ Spanish Language Pack instalado con prioridad
 - ✅ Extensiones esenciales con manejo de errores
 - ✅ Modo manual como fallback robusto
@@ -103,6 +112,7 @@ code --list-extensions | grep "ms-ceintl.vscode-language-pack-es"
 ## 🔧 Configuración Específica
 
 ### macOS vs Otros Sistemas
+
 ```bash
 if detect_vscode_macos_issues; then
     # Lógica específica macOS con anti-crash
@@ -114,6 +124,7 @@ fi
 ```
 
 ### Archivos de Configuración
+
 - `locale.json` → Fuerza idioma español
 - `settings.json` → Configuración optimizada
 - Backup automático de configuraciones existentes
@@ -121,6 +132,7 @@ fi
 ## 🚀 Uso
 
 ### Instalación Automática
+
 ```bash
 git clone https://github.com/tu-usuario/universal-dev-setup.git
 cd universal-dev-setup
@@ -128,6 +140,7 @@ cd universal-dev-setup
 ```
 
 ### Solo VS Code
+
 ```bash
 ./install.sh
 # Seleccionar opción 6: "Solo configuración VS Code"
@@ -136,6 +149,7 @@ cd universal-dev-setup
 ## 📝 Logs y Debugging
 
 El sistema genera logs detallados:
+
 - Detección de crashes
 - Intentos de reintento
 - Éxito/fallo de cada extensión
@@ -150,6 +164,6 @@ El sistema genera logs detallados:
 
 ---
 
-**✅ Estado**: Implementado y funcional  
-**🧪 Testado**: Verificado en múltiples escenarios  
+**✅ Estado**: Implementado y funcional
+**🧪 Testado**: Verificado en múltiples escenarios
 **📚 Documentado**: Guía completa disponible
