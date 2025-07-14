@@ -50,6 +50,20 @@ log_warning() {
     log_message "WARNING" "$1"
 }
 
+# Función de compatibilidad para head -n -1 (eliminar última línea)
+remove_last_line() {
+    local file="$1"
+    local temp_file="$2"
+    
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS: usar sed
+        sed '$d' "$file" > "$temp_file"
+    else
+        # Linux: usar head
+        head -n -1 "$file" > "$temp_file"
+    fi
+}
+
 # Inicializar logging
 initialize_logging() {
     local start_time=$(date)
@@ -361,8 +375,18 @@ check_admin_windows() {
 # Función para finalizar el logging con estadísticas de tiempo y estado
 finalize_logging() {
     local end_time=$(date)
-    local start_timestamp=$(date -d "$start_time" +%s 2>/dev/null || echo 0)
+    local start_timestamp
     local current_timestamp=$(date +%s)
+    
+    # Compatibilidad macOS vs Linux para conversión de fecha
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS usa date -jf
+        start_timestamp=$(date -jf "%a %b %d %H:%M:%S %Z %Y" "$start_time" +%s 2>/dev/null || echo 0)
+    else
+        # Linux usa date -d
+        start_timestamp=$(date -d "$start_time" +%s 2>/dev/null || echo 0)
+    fi
+    
     local duration=$((current_timestamp - start_timestamp))
 
     echo "" >> "$LOG_FILE"

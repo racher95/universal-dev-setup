@@ -22,11 +22,9 @@ install_fonts() {
 }
 
 install_macos_fonts() {
-    # Usar Homebrew Cask para fuentes
-    if ! brew tap | grep -q "homebrew/cask-fonts"; then
-        show_info "Agregando repositorio de fuentes..."
-        brew tap homebrew/cask-fonts
-    fi
+    # El repositorio homebrew/cask-fonts fue migrado
+    # Las fuentes ahora están disponibles directamente como cask
+    show_info "Instalando fuentes desde Homebrew Cask..."
 
     # Lista de fuentes a instalar
     fonts=(

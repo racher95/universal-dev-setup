@@ -3,6 +3,20 @@
 # Módulo de configuración de VS Code
 # Compatible con macOS, Linux, WSL, Windows
 
+# Función de compatibilidad para head -n -1 (eliminar última línea)
+remove_last_line() {
+    local file="$1"
+    local temp_file="$2"
+    
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS: usar sed
+        sed '$d' "$file" > "$temp_file"
+    else
+        # Linux: usar head
+        head -n -1 "$file" > "$temp_file"
+    fi
+}
+
 install_vscode_extensions() {
     show_step "Instalando extensiones de VS Code..."
 
@@ -387,7 +401,7 @@ EOF
 )
 
     # Agregar configuraciones WSL al archivo
-    head -n -1 "$VSCODE_SETTINGS_DIR/settings.json" > "$VSCODE_SETTINGS_DIR/settings.tmp"
+    remove_last_line "$VSCODE_SETTINGS_DIR/settings.json" "$VSCODE_SETTINGS_DIR/settings.tmp"
     echo "$wsl_config" >> "$VSCODE_SETTINGS_DIR/settings.tmp"
     mv "$VSCODE_SETTINGS_DIR/settings.tmp" "$VSCODE_SETTINGS_DIR/settings.json"
 }
@@ -409,7 +423,7 @@ EOF
 )
 
     # Agregar configuraciones macOS al archivo
-    head -n -1 "$VSCODE_SETTINGS_DIR/settings.json" > "$VSCODE_SETTINGS_DIR/settings.tmp"
+    remove_last_line "$VSCODE_SETTINGS_DIR/settings.json" "$VSCODE_SETTINGS_DIR/settings.tmp"
     echo "$macos_config" >> "$VSCODE_SETTINGS_DIR/settings.tmp"
     mv "$VSCODE_SETTINGS_DIR/settings.tmp" "$VSCODE_SETTINGS_DIR/settings.json"
 }
@@ -441,7 +455,7 @@ EOF
 )
 
     # Agregar configuraciones Windows al archivo
-    head -n -1 "$VSCODE_SETTINGS_DIR/settings.json" > "$VSCODE_SETTINGS_DIR/settings.tmp"
+    remove_last_line "$VSCODE_SETTINGS_DIR/settings.json" "$VSCODE_SETTINGS_DIR/settings.tmp"
     echo "$windows_config" >> "$VSCODE_SETTINGS_DIR/settings.tmp"
     mv "$VSCODE_SETTINGS_DIR/settings.tmp" "$VSCODE_SETTINGS_DIR/settings.json"
 }
