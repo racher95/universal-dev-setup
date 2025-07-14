@@ -11,6 +11,34 @@ BLUE='\033[0;34m'
 PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
 
+# Configuración de directorios según el sistema operativo
+setup_vscode_directories() {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        export VSCODE_SETTINGS_DIR="$HOME/Library/Application Support/Code/User"
+        export SYSTEM="macOS"
+    elif [[ "$OSTYPE" == "linux-gnu"* ]] && [[ -n "$WSL_DISTRO_NAME" ]]; then
+        # WSL
+        export VSCODE_SETTINGS_DIR="$HOME/.vscode-server/data/Machine"
+        export SYSTEM="WSL"
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        # Linux nativo
+        export VSCODE_SETTINGS_DIR="$HOME/.config/Code/User"
+        export SYSTEM="Linux"
+    elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
+        # Windows Git Bash
+        export VSCODE_SETTINGS_DIR="$APPDATA/Code/User"
+        export SYSTEM="Windows"
+    else
+        # Fallback
+        export VSCODE_SETTINGS_DIR="$HOME/.config/Code/User"
+        export SYSTEM="Unknown"
+    fi
+
+    show_info "🔧 Sistema detectado: $SYSTEM"
+    show_info "📁 Directorio VS Code: $VSCODE_SETTINGS_DIR"
+}
+
 # Funciones de logging (incluidas localmente para independencia)
 show_success() {
     echo -e "${GREEN}✅ $1${NC}"
@@ -54,15 +82,15 @@ code_install_extension_smart() {
 
     while [[ $attempt -le $max_attempts ]]; do
         show_info "📦 Instalando $ext (intento $attempt/$max_attempts)..."
-        
+
         # Capturar tanto stdout como stderr para ver errores reales
         local output
         local exit_code
-        
+
         # Ejecutar comando y capturar salida completa
         output=$(code --install-extension "$ext" --force 2>&1)
         exit_code=$?
-        
+
         # Mostrar la salida real para diagnóstico
         if [[ -n "$output" ]]; then
             show_info "   📋 Salida de VS Code:"
@@ -70,19 +98,19 @@ code_install_extension_smart() {
                 show_info "   │ $line"
             done
         fi
-        
+
         # Verificar si fue exitoso
         if [[ $exit_code -eq 0 ]]; then
             show_success "✅ $ext instalado correctamente"
             return 0
         fi
-        
+
         # Analizar el tipo de error
         if echo "$output" | grep -qi "fatal\|crash\|electron\|segmentation"; then
             show_warning "⚠️  VS Code crash detectado - permitiendo recuperación"
             show_info "   � Esperando ${pause_after_crash} segundos para que VS Code se recupere..."
             sleep $pause_after_crash
-            
+
             # Incrementar pausa para siguientes intentos
             pause_after_crash=$((pause_after_crash + 2))
         elif echo "$output" | grep -qi "already installed"; then
@@ -96,7 +124,7 @@ code_install_extension_smart() {
             show_info "   ⏳ Pausa estándar de 2 segundos..."
             sleep 2
         fi
-        
+
         ((attempt++))
     done
 
@@ -110,15 +138,15 @@ extension_already_installed_smart() {
     local ext="$1"
     local max_attempts=2
     local attempt=1
-    
+
     while [[ $attempt -le $max_attempts ]]; do
         local output
         local exit_code
-        
+
         # Intentar listar extensiones
         output=$(code --list-extensions 2>&1)
         exit_code=$?
-        
+
         if [[ $exit_code -eq 0 ]]; then
             # Éxito - verificar si la extensión está en la lista
             if echo "$output" | grep -q "^$ext$"; then
@@ -135,7 +163,7 @@ extension_already_installed_smart() {
             ((attempt++))
         fi
     done
-    
+
     # Si no podemos verificar, asumir que no está instalada
     show_warning "⚠️  No se pudo verificar si $ext está instalada - asumiendo que no"
     return 1
@@ -210,6 +238,9 @@ install_extensions_manual_mode() {
 # Función principal de instalación de extensiones
 install_vscode_extensions() {
     show_step "Instalando extensiones de VS Code..."
+
+    # CRÍTICO: Configurar directorios antes de continuar
+    setup_vscode_directories
 
     # Verificar que VS Code esté disponible
     if ! command -v code &> /dev/null; then
@@ -315,7 +346,7 @@ install_vscode_extensions() {
         done
 
         show_status "📊 Resultado macOS: $installed instaladas, $failed errores"
-        
+
         # Dar resumen de errores para diagnóstico
         if [[ $failed -gt 0 ]]; then
             show_warning "⚠️  Se detectaron $failed errores"
@@ -397,6 +428,11 @@ configure_spanish_language() {
 
 configure_vscode_settings() {
     show_step "Configurando VS Code settings.json..."
+
+    # CRÍTICO: Asegurar que los directorios estén configurados
+    if [[ -z "$VSCODE_SETTINGS_DIR" ]]; then
+        setup_vscode_directories
+    fi
 
     # Crear directorio si no existe
     mkdir -p "$VSCODE_SETTINGS_DIR"
