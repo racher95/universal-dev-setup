@@ -652,9 +652,17 @@ add_wsl_settings() {
     local wsl_config=$(cat << 'EOF'
   ,
   // === WSL SPECIFIC SETTINGS ===
-  "terminal.integrated.defaultProfile.windows": "Git Bash",
   "remote.WSL.fileWatcher.polling": true,
-  "remote.WSL.useShellEnvironment": true
+  "remote.WSL.useShellEnvironment": true,
+  "terminal.integrated.defaultProfile.windows": "Ubuntu (WSL)",
+  "terminal.integrated.profiles.windows": {
+    "Ubuntu (WSL)": {
+      "path": "C:\\Windows\\System32\\wsl.exe",
+      "args": ["-d", "Ubuntu"],
+      "icon": "terminal-ubuntu"
+    }
+  },
+  "terminal.integrated.automationProfile.windows": null
 }
 EOF
 )
@@ -670,6 +678,16 @@ add_macos_settings() {
   ,
   // === MACOS SPECIFIC SETTINGS ===
   "terminal.integrated.defaultProfile.osx": "zsh",
+  "terminal.integrated.profiles.osx": {
+    "zsh": {
+      "path": "zsh",
+      "args": ["-l"]
+    },
+    "bash": {
+      "path": "bash",
+      "args": ["-l"]
+    }
+  },
   "editor.fontFamily": "'Fira Code', 'JetBrains Mono', 'SF Mono', 'Monaco', monospace"
 }
 EOF
