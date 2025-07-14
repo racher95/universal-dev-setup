@@ -113,8 +113,7 @@ install_vscode_extensions() {
         "github.vscode-pull-request-github"
 
         # Colaboración
-        "ms-vsliveshare.vsliveshare"
-        "ms-vsliveshare.vsliveshare-audio"
+ms-vsliveshare.vsliveshare
 
         # Utilidades
         "usernamehw.errorlens"

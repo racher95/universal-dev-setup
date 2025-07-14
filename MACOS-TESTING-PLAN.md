@@ -58,14 +58,27 @@ chmod +x macos-diagnostic.sh
 # Seleccionar opción 6 (VS Code)
 ```
 
-**Monitoreo crítico:**
+### PASO 3: Verificación Post-Instalación (NUEVO)
 
-- ✅ Se ejecuta `setup_vscode_directories()`
-- ✅ Sistema detectado correctamente como "macOS"
-- ✅ Directorio configurado: ~/Library/Application Support/Code/User
-- ⚠️ Errores reales de VS Code se muestran (NO se ocultan)
+```bash
+# Verificar que TODAS las extensiones se instalaron:
+chmod +x check-extensions.sh
+./check-extensions.sh
+```
 
-### PASO 3: Análisis de Errores
+**Resultado esperado:**
+
+- ✅ 25+ extensiones instaladas (no solo 6-7)
+- ✅ Progreso: 100% de extensiones
+- ✅ Spanish Language Pack configurado
+
+**Si faltan extensiones:**
+
+- 🔄 Ejecutar instalación manual con los comandos proporcionados
+- 📋 Verificar errores de red o permisos
+- 🔍 Revisar logs de instalación
+
+### PASO 4: Análisis de Errores
 
 Si hay errores, ahora veremos la salida REAL:
 

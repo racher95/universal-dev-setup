@@ -218,12 +218,18 @@ install_extensions_manual_mode() {
     show_info "   → Busca: 'JavaScript and TypeScript Nightly'"
     show_info "   → Publisher: ms-vscode"
     echo ""
+    show_info "🤝 8. Live Share"
+    show_info "   → Busca: 'Live Share'"
+    show_info "   → Publisher: MS-vsliveshare"
+    show_info "   → NOTA: NO instalar Live Share Audio (discontinuado)"
+    echo ""
 
     show_info "📝 INSTRUCCIONES:"
     show_info "1. Abre VS Code"
     show_info "2. Presiona Cmd+Shift+X (Extensions)"
     show_info "3. Busca e instala cada extensión de la lista"
     show_info "4. Reinicia VS Code después de instalar Spanish Language Pack"
+    show_info "5. EVITA instalar extensiones WSL en macOS (innecesarias)"
     echo ""
 
     # Configurar idioma manualmente
@@ -235,23 +241,13 @@ install_extensions_manual_mode() {
     show_info "💡 VS Code se configurará en español después del reinicio"
 }
 
-# Función principal de instalación de extensiones
-install_vscode_extensions() {
-    show_step "Instalando extensiones de VS Code..."
+# Función para obtener extensiones según el sistema operativo
+get_system_extensions() {
+    local system="$1"
 
-    # CRÍTICO: Configurar directorios antes de continuar
-    setup_vscode_directories
-
-    # Verificar que VS Code esté disponible
-    if ! command -v code &> /dev/null; then
-        show_error "VS Code no está disponible en PATH"
-        show_info "Instala VS Code desde: https://code.visualstudio.com/"
-        return 1
-    fi
-
-    # Lista de extensiones esenciales
-    local extensions=(
-        # Idioma español - PRIORIDAD: Instalar primero
+    # Extensiones base común para todos los sistemas
+    local base_extensions=(
+        # Idioma español - PRIORIDAD
         "ms-ceintl.vscode-language-pack-es"
 
         # Esenciales
@@ -278,7 +274,6 @@ install_vscode_extensions() {
 
         # Colaboración
         "ms-vsliveshare.vsliveshare"
-        "ms-vsliveshare.vsliveshare-audio"
 
         # Utilidades
         "usernamehw.errorlens"
@@ -292,6 +287,66 @@ install_vscode_extensions() {
         "rust-lang.rust-analyzer"
         "golang.go"
     )
+
+    # Extensiones específicas por sistema
+    case "$system" in
+        "macOS")
+            # macOS no necesita extensiones de WSL/Remote
+            local macos_extensions=(
+                "${base_extensions[@]}"
+            )
+            echo "${macos_extensions[@]}"
+            ;;
+        "WSL")
+            # WSL necesita extensiones de desarrollo remoto
+            local wsl_extensions=(
+                "${base_extensions[@]}"
+                "ms-vscode-remote.remote-wsl"
+                "ms-vscode-remote.remote-containers"
+                "ms-vscode-remote.remote-ssh"
+            )
+            echo "${wsl_extensions[@]}"
+            ;;
+        "Linux")
+            # Linux nativo - extensiones base
+            local linux_extensions=(
+                "${base_extensions[@]}"
+            )
+            echo "${linux_extensions[@]}"
+            ;;
+        "Windows")
+            # Windows nativo con soporte para WSL
+            local windows_extensions=(
+                "${base_extensions[@]}"
+                "ms-vscode-remote.remote-wsl"
+            )
+            echo "${windows_extensions[@]}"
+            ;;
+        *)
+            # Fallback - extensiones base
+            echo "${base_extensions[@]}"
+            ;;
+    esac
+}
+
+# Función principal de instalación de extensiones
+install_vscode_extensions() {
+    show_step "Instalando extensiones de VS Code..."
+
+    # CRÍTICO: Configurar directorios antes de continuar
+    setup_vscode_directories
+
+    # Verificar que VS Code esté disponible
+    if ! command -v code &> /dev/null; then
+        show_error "VS Code no está disponible en PATH"
+        show_info "Instala VS Code desde: https://code.visualstudio.com/"
+        return 1
+    fi
+
+    # Obtener extensiones específicas del sistema
+    local extensions_array=($(get_system_extensions "$SYSTEM"))
+
+    show_info "📦 Extensiones a instalar para $SYSTEM: ${#extensions_array[@]}"
 
     # Detectar si estamos en macOS con problemas
     if detect_vscode_macos_issues; then
@@ -321,18 +376,20 @@ install_vscode_extensions() {
             show_info "✅ Spanish Language Pack ya está instalado"
         fi
 
-        # PASO 2: Instalar extensiones esenciales con manejo inteligente
-        local essential_extensions=(
-            "esbenp.prettier-vscode"
-            "dbaeumer.vscode-eslint"
-            "ritwickdey.liveserver"
-            "eamodio.gitlens"
-            "pkief.material-icon-theme"
-            "ms-vscode.vscode-typescript-next"
-        )
+        # PASO 2: Instalar todas las extensiones restantes
+        show_info "📦 Instalando todas las extensiones con manejo inteligente de crashes..."
+        show_info "📋 Total de extensiones a procesar: ${#extensions_array[@]}"
 
-        show_info "📦 Instalando extensiones esenciales con manejo inteligente de crashes..."
-        for ext in "${essential_extensions[@]}"; do
+        local current=0
+        for ext in "${extensions_array[@]}"; do
+            # Saltar Spanish Language Pack ya procesado
+            if [[ "$ext" == "ms-ceintl.vscode-language-pack-es" ]]; then
+                continue
+            fi
+
+            ((current++))
+            show_info "🔄 [$current/${#extensions_array[@]}] Procesando: $ext"
+
             if ! extension_already_installed_smart "$ext"; then
                 if code_install_extension_smart "$ext"; then
                     ((installed++))
@@ -345,7 +402,7 @@ install_vscode_extensions() {
             fi
         done
 
-        show_status "📊 Resultado macOS: $installed instaladas, $failed errores"
+        show_status "📊 Resultado macOS COMPLETO: $installed nuevas instaladas, $failed errores"
 
         # Dar resumen de errores para diagnóstico
         if [[ $failed -gt 0 ]]; then
@@ -368,7 +425,7 @@ install_vscode_extensions() {
     local failed=0
 
     show_info "🐧 Sistema no-macOS: Instalación con manejo estándar de errores"
-    for ext in "${extensions[@]}"; do
+    for ext in "${extensions_array[@]}"; do
         if ! extension_already_installed_smart "$ext"; then
             if code_install_extension_smart "$ext"; then
                 ((installed++))

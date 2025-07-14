@@ -5,6 +5,7 @@
 Basado en el análisis correcto del problema, hemos cambiado completamente la estrategia:
 
 ### ❌ **Problema del Enfoque Anterior:**
+
 - Ocultaba los errores reales (`2>/dev/null`)
 - Usaba métodos alternativos (VSIX) que también fallaban
 - No permitía diagnóstico del problema real
@@ -13,6 +14,7 @@ Basado en el análisis correcto del problema, hemos cambiado completamente la es
 ### ✅ **Nuevo Sistema Inteligente:**
 
 #### 1. **Captura de Errores Reales**
+
 ```bash
 # Capturar tanto stdout como stderr
 output=$(code --install-extension "$ext" --force 2>&1)
@@ -28,6 +30,7 @@ fi
 ```
 
 #### 2. **Detección Específica de Tipos de Error**
+
 ```bash
 if echo "$output" | grep -qi "fatal\|crash\|electron\|segmentation"; then
     show_warning "⚠️  VS Code crash detectado - permitiendo recuperación"
@@ -39,6 +42,7 @@ elif echo "$output" | grep -qi "not found\|does not exist"; then
 ```
 
 #### 3. **Sistema de Pausas Inteligentes**
+
 ```bash
 # Pausas variables que se incrementan
 local pause_after_crash=5
@@ -47,6 +51,7 @@ pause_after_crash=$((pause_after_crash + 2))  # 5, 7, 9 segundos
 ```
 
 #### 4. **Recuperación Automática de VS Code**
+
 - Permite que VS Code se crashee naturalmente
 - Detecta el crash específicamente
 - Espera tiempo suficiente para que VS Code se reinicie
@@ -55,6 +60,7 @@ pause_after_crash=$((pause_after_crash + 2))  # 5, 7, 9 segundos
 ## 🔍 **Diagnóstico Completo**
 
 ### Información que Ahora se Muestra:
+
 - ✅ **Errores exactos** de VS Code
 - ✅ **Tipo de problema** (crash, extensión no encontrada, ya instalada)
 - ✅ **Tiempo de recuperación** para cada intento
@@ -62,6 +68,7 @@ pause_after_crash=$((pause_after_crash + 2))  # 5, 7, 9 segundos
 - ✅ **Código de salida** de cada comando
 
 ### Tipos de Error Detectados:
+
 1. **Crashes de Electron**: `fatal|crash|electron|segmentation`
 2. **Extensión ya instalada**: `already installed`
 3. **Extensión no encontrada**: `not found|does not exist`
@@ -70,6 +77,7 @@ pause_after_crash=$((pause_after_crash + 2))  # 5, 7, 9 segundos
 ## 🛠️ **Flujo de Instalación Mejorado**
 
 ### macOS:
+
 1. **Detectar macOS** → Activar sistema inteligente
 2. **Spanish Language Pack** → Prioridad máxima con diagnóstico
 3. **Extensiones esenciales** → Una por una con manejo de crashes
@@ -77,22 +85,26 @@ pause_after_crash=$((pause_after_crash + 2))  # 5, 7, 9 segundos
 5. **Modo manual** → Solo si múltiples fallos persistentes
 
 ### Otros sistemas:
+
 - Usa el mismo sistema inteligente pero sin las pausas específicas de macOS
 - Mantiene la captura de errores reales para diagnóstico
 
 ## 📊 **Beneficios del Nuevo Sistema**
 
 ### Para Debugging:
+
 - ✅ **Errores visibles**: Puedes ver exactamente qué falla
 - ✅ **Tipo de problema**: Identificas si es crash, red, o extensión
 - ✅ **Comportamiento real**: Observas cómo se comporta VS Code
 
 ### Para Usuario:
+
 - ✅ **Transparencia**: Sabes qué está pasando
 - ✅ **Progreso real**: Ves el estado real de cada extensión
 - ✅ **Instrucciones claras**: Qué hacer si algo falla
 
 ### Para macOS Específicamente:
+
 - ✅ **Manejo natural**: Permite que VS Code se recupere solo
 - ✅ **Timing inteligente**: Pausas que se adaptan al comportamiento
 - ✅ **Persistencia**: Continúa después de crashes
@@ -100,11 +112,13 @@ pause_after_crash=$((pause_after_crash + 2))  # 5, 7, 9 segundos
 ## 🧪 **Testing y Validación**
 
 ### Script de Prueba:
+
 ```bash
 ./test-smart-crash-system.sh
 ```
 
 ### Verificaciones Incluidas:
+
 - ✅ Funciones del nuevo sistema
 - ✅ Captura de errores reales
 - ✅ Detección de tipos de crash

@@ -106,17 +106,17 @@ show_step "6. Probando VS Code (si está disponible)"
 
 if command -v code &> /dev/null; then
     show_success "VS Code encontrado en PATH"
-    
+
     # Simular una prueba del nuevo sistema
     show_info "Probando captura de salida de VS Code..."
-    
+
     # Intentar listar extensiones y capturar salida
     local output
     local exit_code
-    
+
     output=$(code --list-extensions 2>&1)
     exit_code=$?
-    
+
     if [[ $exit_code -eq 0 ]]; then
         show_success "VS Code responde correctamente"
         local ext_count=$(echo "$output" | wc -l)

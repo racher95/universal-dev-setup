@@ -232,7 +232,6 @@ install_vscode_extensions() {
 
         # Colaboración
         "ms-vsliveshare.vsliveshare"
-        "ms-vsliveshare.vsliveshare-audio"
 
         # Utilidades
         "usernamehw.errorlens"
