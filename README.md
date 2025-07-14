@@ -156,6 +156,7 @@ El script ofrece un menú interactivo con las siguientes opciones:
 
 ### Extensiones VS Code:
 
+- **🌍 Spanish Language Pack** - Interfaz en español (PRIORIDAD)
 - **Prettier** - Formateo de código
 - **ESLint** - Linting
 - **Live Server** - Servidor local
@@ -178,6 +179,7 @@ El script ofrece un menú interactivo con las siguientes opciones:
 
 El script aplica configuraciones optimizadas para desarrollo web:
 
+- **🌍 Idioma**: Interfaz en español configurada automáticamente
 - **Editor**: Fuentes con ligaduras, formateo automático
 - **Prettier**: Configuración estándar
 - **ESLint**: Corrección automática
@@ -185,6 +187,14 @@ El script aplica configuraciones optimizadas para desarrollo web:
 - **Live Server**: Puerto 5500 por defecto
 - **Git**: Integración mejorada
 - **WSL**: Configuraciones específicas
+
+### 📋 Archivos de Configuración:
+
+- `settings.json` - Configuración principal con `"locale": "es"`
+- `locale.json` - Archivo específico de idioma para forzar español
+- Ambos archivos aseguran que VS Code se muestre en español
+
+**💡 Importante:** Reinicia VS Code después de la instalación para ver la interfaz en español.
 
 ## 🔒 Seguridad y Logging
 

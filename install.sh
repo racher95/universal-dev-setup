@@ -54,7 +54,7 @@ log_warning() {
 remove_last_line() {
     local file="$1"
     local temp_file="$2"
-    
+
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS: usar sed
         sed '$d' "$file" > "$temp_file"
@@ -377,7 +377,7 @@ finalize_logging() {
     local end_time=$(date)
     local start_timestamp
     local current_timestamp=$(date +%s)
-    
+
     # Compatibilidad macOS vs Linux para conversión de fecha
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS usa date -jf
@@ -386,7 +386,7 @@ finalize_logging() {
         # Linux usa date -d
         start_timestamp=$(date -d "$start_time" +%s 2>/dev/null || echo 0)
     fi
-    
+
     local duration=$((current_timestamp - start_timestamp))
 
     echo "" >> "$LOG_FILE"

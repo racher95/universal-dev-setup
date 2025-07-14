@@ -171,7 +171,7 @@ check_windows_admin() {
 # Instalar Chocolatey específicamente para fuentes
 install_chocolatey_for_fonts() {
     show_info "Chocolatey no encontrado. Intentando instalación..."
-    
+
     if ! command -v powershell &> /dev/null && ! command -v pwsh &> /dev/null; then
         show_warning "PowerShell no disponible para instalar Chocolatey"
         return 1
@@ -214,7 +214,7 @@ install_fonts_with_chocolatey() {
     # Lista de fuentes disponibles en Chocolatey
     local fonts=(
         "firacode"
-        "jetbrainsmono" 
+        "jetbrainsmono"
         "cascadiacodepl"
         "hackfont"
         "sourcecodepro"
@@ -298,17 +298,17 @@ verify_windows_fonts() {
     # Verificar usando PowerShell si está disponible
     if command -v powershell &> /dev/null; then
         show_info "Verificando fuentes con PowerShell..."
-        
+
         for font in "${fonts_to_check[@]}"; do
             local ps_script="
                 \$fonts = [System.Drawing.Text.InstalledFontCollection]::new().Families.Name
-                if (\$fonts -contains '$font') { 
+                if (\$fonts -contains '$font') {
                     Write-Host 'FOUND'
-                } else { 
+                } else {
                     Write-Host 'NOT_FOUND'
                 }
             "
-            
+
             local result=$(echo "$ps_script" | powershell -Command -)
             if [[ "$result" == *"FOUND"* ]]; then
                 show_status "$font: ✓ Instalada"
@@ -320,12 +320,12 @@ verify_windows_fonts() {
     else
         # Verificación alternativa por archivos
         show_info "Verificando fuentes por archivos del sistema..."
-        
+
         local font_dirs=(
             "/c/Windows/Fonts"
             "/c/Users/$USER/AppData/Local/Microsoft/Windows/Fonts"
         )
-        
+
         for font in "${fonts_to_check[@]}"; do
             local found_font=false
             for dir in "${font_dirs[@]}"; do
@@ -340,7 +340,7 @@ verify_windows_fonts() {
                     fi
                 fi
             done
-            
+
             if [[ "$found_font" == false ]]; then
                 show_info "$font: ✗ No encontrada"
             fi
@@ -348,7 +348,7 @@ verify_windows_fonts() {
     fi
 
     show_info "Fuentes verificadas: $found/$total encontradas"
-    
+
     if [[ $found -eq 0 ]]; then
         show_warning "No se encontraron fuentes de programación"
         show_info "Ejecuta la instalación manual siguiendo las instrucciones anteriores"

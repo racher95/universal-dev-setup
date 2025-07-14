@@ -7,7 +7,7 @@
 remove_last_line() {
     local file="$1"
     local temp_file="$2"
-    
+
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS: usar sed
         sed '$d' "$file" > "$temp_file"
@@ -29,7 +29,7 @@ install_vscode_extensions() {
 
     # Lista de extensiones esenciales
     local extensions=(
-        # Idioma español
+        # Idioma español - PRIORIDAD: Instalar primero
         "ms-ceintl.vscode-language-pack-es"
 
         # Esenciales
@@ -90,7 +90,27 @@ install_vscode_extensions() {
     local installed=0
     local failed=0
 
+    # PASO 1: Instalar Spanish Language Pack PRIMERO (crítico)
+    local spanish_ext="ms-ceintl.vscode-language-pack-es"
+    show_info "🌍 PRIORIDAD: Instalando Spanish Language Pack..."
+    
+    if ! code --list-extensions | grep -q "^$spanish_ext$"; then
+        if code --install-extension "$spanish_ext" --force; then
+            show_success "✅ Spanish Language Pack instalado"
+            ((installed++))
+        else
+            show_warning "⚠️ Error instalando Spanish Language Pack - se reintentará"
+            ((failed++))
+        fi
+    else
+        show_info "✅ Spanish Language Pack ya está instalado"
+    fi
+
+    # PASO 2: Instalar resto de extensiones
     for ext in "${extensions[@]}"; do
+        # Saltar Spanish Language Pack ya que se instaló arriba
+        [[ "$ext" == "$spanish_ext" ]] && continue
+        
         if ! code --list-extensions | grep -q "^$ext$"; then
             show_info "Instalando $ext..."
             if code --install-extension "$ext" --force; then
@@ -105,6 +125,71 @@ install_vscode_extensions() {
     done
 
     show_status "Extensiones procesadas: $installed instaladas, $failed errores"
+    
+    # PASO 3: Configurar idioma español específicamente
+    configure_spanish_language
+}
+
+configure_spanish_language() {
+    show_step "Configurando idioma español en VS Code..."
+    
+    # Verificar si la extensión de idioma español está instalada
+    if code --list-extensions | grep -q "ms-ceintl.vscode-language-pack-es"; then
+        show_success "✅ Extensión de idioma español encontrada"
+        
+        # Crear archivo locale.json para forzar el idioma
+        local locale_file="$VSCODE_SETTINGS_DIR/locale.json"
+        echo '{"locale":"es"}' > "$locale_file"
+        show_success "Configuración de locale creada: locale.json"
+        
+        # Verificar que settings.json tenga la configuración de idioma
+        if [[ -f "$VSCODE_SETTINGS_DIR/settings.json" ]]; then
+            if ! grep -q '"locale".*"es"' "$VSCODE_SETTINGS_DIR/settings.json"; then
+                show_info "Agregando configuración de idioma a settings.json"
+                # La configuración ya se agrega en generate_base_settings()
+            fi
+        fi
+        
+        show_info "💡 Reinicia VS Code para ver la interfaz en español"
+        show_info "   La extensión Spanish Language Pack estará activa"
+    else
+        show_warning "⚠️ Extensión de idioma español no encontrada"
+        show_info "🔄 Intentando instalación con mayor prioridad..."
+        
+        # Intentar instalación con timeout y retry
+        local max_attempts=3
+        local attempt=1
+        
+        while [[ $attempt -le $max_attempts ]]; do
+            show_info "Intento $attempt/$max_attempts: Instalando Spanish Language Pack..."
+            
+            if timeout 60 code --install-extension ms-ceintl.vscode-language-pack-es --force; then
+                show_success "✅ Spanish Language Pack instalado correctamente"
+                
+                # Configurar después de instalación exitosa
+                local locale_file="$VSCODE_SETTINGS_DIR/locale.json"
+                echo '{"locale":"es"}' > "$locale_file"
+                show_success "Configuración de locale creada: locale.json"
+                
+                show_info "🎉 VS Code configurado en español"
+                show_info "💡 Reinicia VS Code para ver los cambios"
+                return 0
+            else
+                show_warning "❌ Intento $attempt falló"
+                ((attempt++))
+                [[ $attempt -le $max_attempts ]] && show_info "⏳ Esperando 3 segundos antes del siguiente intento..." && sleep 3
+            fi
+        done
+        
+        show_error "❌ No se pudo instalar Spanish Language Pack después de $max_attempts intentos"
+        show_info "📋 Instalación manual:"
+        show_info "   1. Abre VS Code"
+        show_info "   2. Ctrl+Shift+P → 'Extensions: Install Extensions'"
+        show_info "   3. Busca: 'Spanish Language Pack'"
+        show_info "   4. Instala: 'Spanish Language Pack for Visual Studio Code'"
+        show_info "   5. Reinicia VS Code"
+        return 1
+    fi
 }
 
 configure_vscode_settings() {
