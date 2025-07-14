@@ -97,7 +97,16 @@ function Start-BashScript {
     param([string]$BashPath)
 
     Write-Info "Lanzando script principal en Git Bash..."
-    $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+    
+    # Obtener directorio del script de forma más robusta
+    if ($PSScriptRoot) {
+        $scriptDir = $PSScriptRoot
+    } elseif ($MyInvocation.MyCommand.Path) {
+        $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+    } else {
+        $scriptDir = Get-Location
+    }
+    
     $unixPath = $scriptDir -replace "\\", "/" -replace "C:", "/c"
 
     # Ejecutar instalación completa automáticamente

@@ -123,20 +123,20 @@ install_windows_dependencies() {
 check_admin_privileges() {
     show_info "Verificando permisos de administrador..."
     
-    # Método 1: Usar whoami para verificar grupos
-    if command -v whoami &> /dev/null; then
-        if whoami /groups | grep -i "S-1-5-32-544" &> /dev/null; then
-            show_status "Permisos de administrador confirmados"
-            return 0
-        fi
-    fi
-
-    # Método 2: Intentar escribir en directorio del sistema
+    # Método 1: Intentar escribir en directorio del sistema (más compatible con Git Bash)
     local test_file="/c/Windows/Temp/admin_test_$$"
     if touch "$test_file" 2>/dev/null; then
         rm -f "$test_file" 2>/dev/null
         show_status "Permisos de escritura confirmados"
         return 0
+    fi
+    
+    # Método 2: Usar PowerShell para verificar si está disponible
+    if command -v powershell.exe &> /dev/null; then
+        if powershell.exe -Command "([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)" 2>/dev/null | grep -q "True"; then
+            show_status "Permisos de administrador confirmados via PowerShell"
+            return 0
+        fi
     fi
 
     # Método 3: Verificar variable de entorno administrativa
@@ -233,6 +233,46 @@ install_with_chocolatey() {
     for package in "${packages[@]}"; do
         local choco_name="${choco_packages[$package]}"
         if [[ -n "$choco_name" ]]; then
+            # Verificar si ya está instalado
+            case "$package" in
+                "git")
+                    if command -v git &> /dev/null; then
+                        show_status "Git ya está instalado ($(git --version | cut -d' ' -f3))"
+                        continue
+                    fi
+                    ;;
+                "nodejs")
+                    if command -v node &> /dev/null; then
+                        show_status "Node.js ya está instalado ($(node --version))"
+                        continue
+                    fi
+                    ;;
+                "curl")
+                    if command -v curl &> /dev/null; then
+                        show_status "cURL ya está instalado"
+                        continue
+                    fi
+                    ;;
+                "wget")
+                    if command -v wget &> /dev/null; then
+                        show_status "wget ya está instalado"
+                        continue
+                    fi
+                    ;;
+                "python3")
+                    if command -v python &> /dev/null || command -v python3 &> /dev/null; then
+                        show_status "Python ya está instalado"
+                        continue
+                    fi
+                    ;;
+                "7zip")
+                    if command -v 7z &> /dev/null; then
+                        show_status "7-Zip ya está instalado"
+                        continue
+                    fi
+                    ;;
+            esac
+            
             show_info "Instalando $package ($choco_name)..."
             if choco install "$choco_name" -y --no-progress; then
                 show_status "$package instalado"
