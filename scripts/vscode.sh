@@ -5,75 +5,72 @@
 
 install_vscode_extensions() {
     show_step "Instalando extensiones de VS Code..."
-    
+
     # Verificar que VS Code esté disponible
     if ! command -v code &> /dev/null; then
         show_error "VS Code no está disponible en PATH"
         show_info "Instala VS Code desde: https://code.visualstudio.com/"
         return 1
     fi
-    
+
     # Lista de extensiones esenciales
     local extensions=(
         # Esenciales
         "esbenp.prettier-vscode"
         "dbaeumer.vscode-eslint"
         "ms-vscode.vscode-typescript-next"
-        
+
         # Temas e iconos
         "pkief.material-icon-theme"
         "zhuangtongfa.material-theme"
         "dracula-theme.theme-dracula"
-        
+
         # Desarrollo web
         "ritwickdey.liveserver"
         "formulahendry.auto-rename-tag"
         "christian-kohler.path-intellisense"
         "bradlc.vscode-tailwindcss"
-        "ms-vscode.vscode-json"
-        
+        # "ms-vscode.vscode-json"  # Ya incluido en VS Code por defecto
+
         # Git
         "eamodio.gitlens"
         "mhutchie.git-graph"
-        
+
         # Colaboración
         "ms-vsliveshare.vsliveshare"
         "ms-vsliveshare.vsliveshare-audio"
-        
+
         # Utilidades
         "usernamehw.errorlens"
         "streetsidesoftware.code-spell-checker"
         "gruntfuggly.todo-tree"
         "ms-vscode.hexeditor"
-        
+
         # Desarrollo específico
         "ms-python.python"
         "ms-vscode.cpptools"
         "rust-lang.rust-analyzer"
         "golang.go"
     )
-    
+
     # Extensiones específicas por sistema
     case "$SYSTEM" in
         "WSL")
-            extensions+=(
-                "ms-vscode-remote.remote-wsl"
-                "ms-vscode-remote.remote-containers"
-                "ms-vscode-remote.remote-ssh"
-            )
+            # Las extensiones Remote se instalan automáticamente desde Windows
+            show_info "Extensiones Remote gestionadas desde Windows VS Code"
             ;;
         "macOS"|"Linux")
+            # Agregar extensiones específicas para sistemas nativos si es necesario
             extensions+=(
-                "ms-vscode-remote.remote-ssh"
-                "ms-vscode-remote.remote-containers"
+                # Futuras extensiones específicas de macOS/Linux
             )
             ;;
     esac
-    
+
     # Instalar extensiones
     local installed=0
     local failed=0
-    
+
     for ext in "${extensions[@]}"; do
         if ! code --list-extensions | grep -q "^$ext$"; then
             show_info "Instalando $ext..."
@@ -87,33 +84,33 @@ install_vscode_extensions() {
             show_info "$ext ya está instalada"
         fi
     done
-    
+
     show_status "Extensiones procesadas: $installed instaladas, $failed errores"
 }
 
 configure_vscode_settings() {
     show_step "Configurando VS Code settings.json..."
-    
+
     # Crear directorio si no existe
     mkdir -p "$VSCODE_SETTINGS_DIR"
-    
+
     # Verificar permisos de escritura
     if [[ ! -w "$VSCODE_SETTINGS_DIR" ]]; then
         show_error "No se puede escribir en: $VSCODE_SETTINGS_DIR"
         show_info "Verifica permisos o ejecuta con privilegios apropiados"
         return 1
     fi
-    
+
     # Backup de configuración existente
     if [[ -f "$VSCODE_SETTINGS_DIR/settings.json" ]]; then
         local backup_file="$VSCODE_SETTINGS_DIR/settings.json.backup.$(date +%Y%m%d_%H%M%S)"
         cp "$VSCODE_SETTINGS_DIR/settings.json" "$backup_file"
         show_info "Backup creado: $(basename "$backup_file")"
     fi
-    
+
     # Generar configuración base
     generate_base_settings > "$VSCODE_SETTINGS_DIR/settings.json"
-    
+
     # Agregar configuraciones específicas por sistema
     case "$SYSTEM" in
         "WSL")
@@ -126,7 +123,7 @@ configure_vscode_settings() {
             add_windows_settings
             ;;
     esac
-    
+
     show_status "Settings.json configurado para $SYSTEM"
 }
 
@@ -364,7 +361,7 @@ add_wsl_settings() {
 }
 EOF
 )
-    
+
     # Agregar configuraciones WSL al archivo
     head -n -1 "$VSCODE_SETTINGS_DIR/settings.json" > "$VSCODE_SETTINGS_DIR/settings.tmp"
     echo "$wsl_config" >> "$VSCODE_SETTINGS_DIR/settings.tmp"
@@ -386,7 +383,7 @@ add_macos_settings() {
 }
 EOF
 )
-    
+
     # Agregar configuraciones macOS al archivo
     head -n -1 "$VSCODE_SETTINGS_DIR/settings.json" > "$VSCODE_SETTINGS_DIR/settings.tmp"
     echo "$macos_config" >> "$VSCODE_SETTINGS_DIR/settings.tmp"
@@ -418,7 +415,7 @@ add_windows_settings() {
 }
 EOF
 )
-    
+
     # Agregar configuraciones Windows al archivo
     head -n -1 "$VSCODE_SETTINGS_DIR/settings.json" > "$VSCODE_SETTINGS_DIR/settings.tmp"
     echo "$windows_config" >> "$VSCODE_SETTINGS_DIR/settings.tmp"
@@ -428,26 +425,26 @@ EOF
 # Función para verificar configuración de VS Code
 check_vscode_config() {
     show_step "Verificando configuración de VS Code..."
-    
+
     if [[ -f "$VSCODE_SETTINGS_DIR/settings.json" ]]; then
         show_status "settings.json encontrado"
-        
+
         # Verificar configuraciones clave
         if grep -q "material-icon-theme" "$VSCODE_SETTINGS_DIR/settings.json"; then
             show_status "Tema de iconos configurado"
         fi
-        
+
         if grep -q "Fira Code" "$VSCODE_SETTINGS_DIR/settings.json"; then
             show_status "Fuente Fira Code configurada"
         fi
-        
+
         if grep -q "prettier-vscode" "$VSCODE_SETTINGS_DIR/settings.json"; then
             show_status "Prettier configurado"
         fi
     else
         show_warning "settings.json no encontrado"
     fi
-    
+
     # Verificar extensiones
     if command -v code &> /dev/null; then
         local ext_count=$(code --list-extensions | wc -l)
