@@ -50,16 +50,17 @@ function Install-Chocolatey {
     try {
         Set-ExecutionPolicy Bypass -Scope Process -Force
         [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-        Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+        iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
         
-        # Actualizar PATH para esta sesión
+        # Recargar variables de entorno
         $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
         
+        # Verificar instalación
         if (Get-Command choco -ErrorAction SilentlyContinue) {
             Write-ColorOutput "✅ Chocolatey instalado correctamente" $ColorSuccess
             return $true
         } else {
-            Write-ColorOutput "❌ Error: Chocolatey no se instaló correctamente" $ColorError
+            Write-ColorOutput "❌ Error verificando instalación de Chocolatey" $ColorError
             return $false
         }
     } catch {
@@ -69,25 +70,9 @@ function Install-Chocolatey {
 }
 
 function Install-GitBash {
-    Write-ColorOutput "=== INSTALANDO GIT BASH ===" $ColorInfo
+    Write-ColorOutput "Instalando Git Bash..." $ColorInfo
     
-    # Verificar si ya está instalado
-    $bashPath = Find-GitBash
-    if ($bashPath) {
-        Write-ColorOutput "✅ Git Bash ya está instalado en: $bashPath" $ColorSuccess
-        return $bashPath
-    }
-    
-    # Verificar permisos de administrador
-    if (-not (Test-AdminRights)) {
-        Write-ColorOutput "❌ Se requieren permisos de administrador para instalar Git Bash" $ColorError
-        Write-ColorOutput "Reinicia PowerShell como administrador y ejecuta de nuevo" $ColorWarning
-        return $null
-    }
-    
-    Write-ColorOutput "Instalando Git for Windows..." $ColorInfo
-    
-    # Método 1: Chocolatey (más rápido y silencioso)
+    # Método 1: Chocolatey (más rápido si está disponible)
     if (Get-Command choco -ErrorAction SilentlyContinue) {
         Write-ColorOutput "Usando Chocolatey para instalar Git..." $ColorInfo
         try {
@@ -157,42 +142,43 @@ function Install-GitBash {
         }
     }
     
-    # Método 3: Descarga directa (último recurso)
-    Write-ColorOutput "Descargando Git for Windows directamente..." $ColorInfo
+    # Método 3: Descarga directa
+    Write-ColorOutput "Descargando Git desde git-scm.com..." $ColorInfo
     try {
-        $gitUrl = "https://github.com/git-for-windows/git/releases/download/v2.42.0.windows.2/Git-2.42.0.2-64-bit.exe"
-        $gitInstaller = "$env:TEMP\GitInstaller.exe"
+        $gitUrl = "https://git-scm.com/download/win"
+        $tempFile = "$env:TEMP\GitInstaller.exe"
         
-        Write-ColorOutput "Descargando desde GitHub..." $ColorInfo
-        Invoke-WebRequest -Uri $gitUrl -OutFile $gitInstaller -UseBasicParsing
+        # Detectar arquitectura
+        $arch = if ([Environment]::Is64BitOperatingSystem) { "64" } else { "32" }
+        $directUrl = "https://github.com/git-for-windows/git/releases/latest/download/Git-2.42.0.2-$arch-bit.exe"
         
-        Write-ColorOutput "Ejecutando instalador silencioso..." $ColorInfo
-        Start-Process -FilePath $gitInstaller -ArgumentList "/SILENT", "/NORESTART" -Wait
+        Write-ColorOutput "Descargando instalador de Git..." $ColorInfo
+        Invoke-WebRequest -Uri $directUrl -OutFile $tempFile -UseBasicParsing
         
-        Remove-Item $gitInstaller -Force
+        Write-ColorOutput "Ejecutando instalador de Git..." $ColorInfo
+        Start-Process -FilePath $tempFile -ArgumentList "/SILENT" -Wait
         
-        Write-ColorOutput "✅ Git instalado mediante descarga directa" $ColorSuccess
-        
-        # Actualizar PATH
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-        
-        # Buscar Git Bash instalado
-        Start-Sleep -Seconds 3
-        $bashPath = Find-GitBash
-        if ($bashPath) {
-            return $bashPath
+        if ($LASTEXITCODE -eq 0) {
+            Write-ColorOutput "✅ Git instalado con descarga directa" $ColorSuccess
+            
+            # Actualizar PATH
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+            
+            # Buscar Git Bash instalado
+            Start-Sleep -Seconds 3
+            $bashPath = Find-GitBash
+            if ($bashPath) {
+                Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
+                return $bashPath
+            }
         }
+        
+        Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
     } catch {
-        Write-ColorOutput "❌ Error con descarga directa: $($_.Exception.Message)" $ColorError
+        Write-ColorOutput "❌ Error en descarga directa: $($_.Exception.Message)" $ColorError
     }
     
-    Write-ColorOutput "❌ No se pudo instalar Git Bash automáticamente" $ColorError
-    Write-ColorOutput "Instalación manual requerida:" $ColorWarning
-    Write-ColorOutput "1. Ve a: https://git-scm.com/download/win" $ColorInfo
-    Write-ColorOutput "2. Descarga e instala Git for Windows" $ColorInfo
-    Write-ColorOutput "3. Asegúrate de seleccionar 'Git Bash' durante la instalación" $ColorInfo
-    Write-ColorOutput "4. Reinicia PowerShell y ejecuta de nuevo" $ColorInfo
-    
+    # Si llegamos aquí, ningún método funcionó
     return $null
 }
 
@@ -214,7 +200,7 @@ function Launch-BashScript {
     $unixPath = $scriptDir -replace "\\", "/" -replace "C:", "/c"
     
     # Ejecutar el script bash
-    Write-ColorOutput "Ejecutando: $BashPath -c 'cd \"$unixPath\" && ./install.sh'" $ColorInfo
+    Write-ColorOutput "Ejecutando: $BashPath -c 'cd `"$unixPath`" && ./install.sh'" $ColorInfo
     Write-ColorOutput "────────────────────────────────────────────────────────────" $ColorInfo
     
     & $BashPath -c "cd '$unixPath' && ./install.sh"
@@ -268,15 +254,9 @@ function Main {
     Write-ColorOutput "╚══════════════════════════════════════════════════════════════╝" $ColorInfo
     Write-ColorOutput ""
     
+    # Mostrar ayuda si se solicita
     if ($Help) {
         Show-Help
-        return
-    }
-    
-    # Verificar PowerShell version
-    if ($PSVersionTable.PSVersion.Major -lt 5) {
-        Write-ColorOutput "❌ ERROR: PowerShell 5.1 o superior requerido" $ColorError
-        Write-ColorOutput "Versión actual: $($PSVersionTable.PSVersion)" $ColorError
         return
     }
     
