@@ -17,11 +17,11 @@ Un script inteligente que detecta automáticamente tu sistema operativo y config
 
 ## 💻 Sistemas Soportados
 
-| Sistema          | Estado | Notas                     |
-| ---------------- | ------ | ------------------------- |
-| macOS (nativo)   | ✅     | Homebrew + VS Code nativo |
-| Linux (nativo)   | ✅     | APT + VS Code nativo      |
-| Windows WSL      | ✅     | APT + VS Code en Windows  |
+| Sistema          | Estado | Notas                                                  |
+| ---------------- | ------ | ------------------------------------------------------ |
+| macOS (nativo)   | ✅     | Homebrew + VS Code nativo                              |
+| Linux (nativo)   | ✅     | APT + VS Code nativo                                   |
+| Windows WSL      | ✅     | APT + VS Code en Windows                               |
 | Windows (nativo) | ✅     | Auto-instalación de Chocolatey, dependencias y fuentes |
 
 ## 🛠️ Instalación
@@ -29,6 +29,7 @@ Un script inteligente que detecta automáticamente tu sistema operativo y config
 ### 🪟 **Windows (Recomendado) - Bootstrap Automático**
 
 #### ✨ Nuevo: Instalación Automática de Git Bash
+
 ```powershell
 # PowerShell como administrador - ¡Un solo comando!
 git clone https://github.com/tu-usuario/universal-dev-setup.git
@@ -37,6 +38,7 @@ cd universal-dev-setup
 ```
 
 **¿Qué hace el script PowerShell?**
+
 1. 🔍 **Detecta** si Git Bash está instalado
 2. 📦 **Instala Git Bash automáticamente** si no existe
 3. 🔄 **Se relanza en Git Bash** automáticamente
@@ -45,6 +47,7 @@ cd universal-dev-setup
 #### Métodos Alternativos:
 
 **Git Bash (si ya lo tienes):**
+
 ```bash
 # Git Bash como administrador
 git clone https://github.com/tu-usuario/universal-dev-setup.git
@@ -53,6 +56,7 @@ cd universal-dev-setup
 ```
 
 **Archivo .bat:**
+
 ```cmd
 # Ejecutar directamente
 install.bat
@@ -63,11 +67,13 @@ install.bat
 ### 🐧 **Linux/macOS/WSL**
 
 #### Instalación rápida (un comando):
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/tu-usuario/universal-dev-setup/main/install.sh | bash
 ```
 
 #### Instalación manual:
+
 ```bash
 # Clonar el repositorio
 git clone https://github.com/tu-usuario/universal-dev-setup.git
@@ -220,12 +226,14 @@ El script aplica configuraciones optimizadas para desarrollo web:
 ## 🔍 **Diagnóstico y Pruebas**
 
 ### Para Windows:
+
 ```bash
 # Diagnóstico específico antes de instalar
 ./diagnose-windows.sh
 ```
 
 ### Para cualquier plataforma:
+
 ```bash
 # Pruebas automatizadas completas
 ./run-tests.sh

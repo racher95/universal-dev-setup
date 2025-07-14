@@ -16,6 +16,7 @@ logs/
 ## 🔍 **Tipos de Logs**
 
 ### **1. Log de Instalación Completa**
+
 - **Archivo:** `logs/installation-YYYYMMDD-HHMMSS.log`
 - **Contenido:**
   - Información del sistema
@@ -25,6 +26,7 @@ logs/
   - Duración total
 
 ### **2. Log de Errores**
+
 - **Archivo:** `logs/errors-YYYYMMDD-HHMMSS.log`
 - **Contenido:**
   - Solo errores críticos
@@ -32,6 +34,7 @@ logs/
   - Context de cada error
 
 ### **3. Log de Diagnóstico**
+
 - **Archivo:** `logs/diagnostic-YYYYMMDD-HHMMSS.log`
 - **Contenido:**
   - Estado del sistema antes/después
@@ -84,17 +87,21 @@ Estado final: COMPLETADO
 ## 🐛 **Para Reportar Errores**
 
 ### **Información Necesaria:**
+
 1. **Log completo de instalación:**
+
    ```bash
    cat logs/installation-YYYYMMDD-HHMMSS.log
    ```
 
 2. **Log de errores específicos:**
+
    ```bash
    cat logs/errors-YYYYMMDD-HHMMSS.log
    ```
 
 3. **Diagnóstico específico de Windows:**
+
    ```bash
    ./diagnose-windows.sh
    cat logs/diagnostic-YYYYMMDD-HHMMSS.log

@@ -98,7 +98,7 @@ install_windows_dependencies() {
     # Lista de dependencias esenciales
     local dependencies=(
         "git"
-        "nodejs" 
+        "nodejs"
         "curl"
         "wget"
         "python3"
@@ -122,7 +122,7 @@ install_windows_dependencies() {
 # Verificar permisos de administrador en Windows
 check_admin_privileges() {
     show_info "Verificando permisos de administrador..."
-    
+
     # Método 1: Intentar escribir en directorio del sistema (más compatible con Git Bash)
     local test_file="/c/Windows/Temp/admin_test_$$"
     if touch "$test_file" 2>/dev/null; then
@@ -130,7 +130,7 @@ check_admin_privileges() {
         show_status "Permisos de escritura confirmados"
         return 0
     fi
-    
+
     # Método 2: Usar PowerShell para verificar si está disponible
     if command -v powershell.exe &> /dev/null; then
         if powershell.exe -Command "([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)" 2>/dev/null | grep -q "True"; then
@@ -190,7 +190,7 @@ install_chocolatey() {
     '
 
     show_info "Descargando e instalando Chocolatey..."
-    
+
     # Ejecutar instalación
     if command -v powershell &> /dev/null; then
         echo "$install_script" | powershell -Command -
@@ -203,7 +203,7 @@ install_chocolatey() {
     if command -v choco &> /dev/null; then
         show_status "Chocolatey instalado correctamente"
         choco --version
-        
+
         # Configurar Chocolatey
         choco feature enable -n allowGlobalConfirmation
         show_info "Chocolatey configurado para confirmación automática"
@@ -272,7 +272,7 @@ install_with_chocolatey() {
                     fi
                     ;;
             esac
-            
+
             show_info "Instalando $package ($choco_name)..."
             if choco install "$choco_name" -y --no-progress; then
                 show_status "$package instalado"
@@ -330,7 +330,7 @@ verify_windows_dependencies() {
     for cmd_info in "${commands[@]}"; do
         local cmd="${cmd_info%%:*}"
         local name="${cmd_info##*:}"
-        
+
         if command -v "$cmd" &> /dev/null; then
             local version=$($cmd --version 2>/dev/null | head -n1)
             show_status "$name: $version"
@@ -341,7 +341,7 @@ verify_windows_dependencies() {
     done
 
     show_info "Dependencias verificadas: $verified/$total"
-    
+
     if [[ $verified -eq $total ]]; then
         show_status "Todas las dependencias están instaladas"
         return 0

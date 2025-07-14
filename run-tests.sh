@@ -73,9 +73,9 @@ test_skip() {
 run_test() {
     local test_name="$1"
     local test_command="$2"
-    
+
     echo -e "${CYAN}🔍 Ejecutando: $test_name${NC}"
-    
+
     if eval "$test_command" &>/dev/null; then
         test_pass "$test_name"
     else
@@ -96,7 +96,7 @@ show_header() {
 test_system_detection() {
     echo -e "\n${YELLOW}📋 PRUEBAS DE DETECCIÓN DEL SISTEMA${NC}"
     echo "════════════════════════════════════════════════"
-    
+
     # Detectar sistema
     OS_TYPE="$(uname -s)"
     if [[ -n "$OS_TYPE" ]]; then
@@ -104,7 +104,7 @@ test_system_detection() {
     else
         test_fail "Detección de tipo de OS"
     fi
-    
+
     # Verificar arquitectura
     ARCH="$(uname -m)"
     if [[ -n "$ARCH" ]]; then
@@ -112,7 +112,7 @@ test_system_detection() {
     else
         test_fail "Detección de arquitectura"
     fi
-    
+
     # Verificar kernel
     KERNEL="$(uname -r)"
     if [[ -n "$KERNEL" ]]; then
@@ -125,11 +125,11 @@ test_system_detection() {
 test_script_files() {
     echo -e "\n${YELLOW}📁 PRUEBAS DE ARCHIVOS DEL SCRIPT${NC}"
     echo "════════════════════════════════════════════════"
-    
+
     # Verificar archivo principal
     if [[ -f "install.sh" ]]; then
         test_pass "Archivo install.sh existe"
-        
+
         # Verificar permisos de ejecución
         if [[ -x "install.sh" ]]; then
             test_pass "install.sh es ejecutable"
@@ -139,11 +139,11 @@ test_script_files() {
     else
         test_fail "Archivo install.sh no encontrado"
     fi
-    
+
     # Verificar directorio de scripts
     if [[ -d "scripts" ]]; then
         test_pass "Directorio scripts/ existe"
-        
+
         # Verificar scripts individuales
         for script in dependencies.sh fonts.sh vscode.sh npm-tools.sh git-config.sh; do
             if [[ -f "scripts/$script" ]]; then
@@ -155,7 +155,7 @@ test_script_files() {
     else
         test_fail "Directorio scripts/ no encontrado"
     fi
-    
+
     # Verificar archivos de documentación
     for doc in README.md LOGGING.md WINDOWS.md; do
         if [[ -f "$doc" ]]; then
@@ -169,23 +169,23 @@ test_script_files() {
 test_dependencies() {
     echo -e "\n${YELLOW}🔧 PRUEBAS DE DEPENDENCIAS${NC}"
     echo "════════════════════════════════════════════════"
-    
+
     # Verificar bash
     run_test "Bash disponible" "command -v bash"
-    
+
     # Verificar comandos básicos
     run_test "Comando uname" "command -v uname"
     run_test "Comando date" "command -v date"
     run_test "Comando mkdir" "command -v mkdir"
     run_test "Comando chmod" "command -v chmod"
-    
+
     # Verificar git
     if command -v git &>/dev/null; then
         test_pass "Git disponible ($(git --version | cut -d' ' -f3))"
     else
         test_fail "Git no disponible"
     fi
-    
+
     # Verificar curl o wget
     if command -v curl &>/dev/null; then
         test_pass "curl disponible"
@@ -199,14 +199,14 @@ test_dependencies() {
 test_logging_system() {
     echo -e "\n${YELLOW}📋 PRUEBAS DEL SISTEMA DE LOGGING${NC}"
     echo "════════════════════════════════════════════════"
-    
+
     # Verificar directorio de logs
     if mkdir -p "logs" 2>/dev/null; then
         test_pass "Directorio logs/ se puede crear"
     else
         test_fail "No se puede crear directorio logs/"
     fi
-    
+
     # Verificar escritura de logs
     local test_log="logs/test-$(date +%s).log"
     if echo "Test log entry" > "$test_log" 2>/dev/null; then
@@ -215,7 +215,7 @@ test_logging_system() {
     else
         test_fail "No se pueden escribir logs"
     fi
-    
+
     # Verificar script de visualización de logs
     if [[ -f "view-logs.sh" ]] && [[ -x "view-logs.sh" ]]; then
         test_pass "Script view-logs.sh disponible y ejecutable"
@@ -227,11 +227,11 @@ test_logging_system() {
 test_vscode_compatibility() {
     echo -e "\n${YELLOW}🔌 PRUEBAS DE COMPATIBILIDAD VS CODE${NC}"
     echo "════════════════════════════════════════════════"
-    
+
     # Verificar si VS Code está instalado
     if command -v code &>/dev/null; then
         test_pass "VS Code encontrado en PATH"
-        
+
         # Verificar versión
         local vscode_version=$(code --version 2>/dev/null | head -n1)
         if [[ -n "$vscode_version" ]]; then
@@ -239,7 +239,7 @@ test_vscode_compatibility() {
         else
             test_fail "No se puede detectar versión VS Code"
         fi
-        
+
         # Verificar extensiones
         if code --list-extensions &>/dev/null; then
             test_pass "Comando de extensiones VS Code funciona"
@@ -254,7 +254,7 @@ test_vscode_compatibility() {
 test_platform_specific() {
     echo -e "\n${YELLOW}🖥️  PRUEBAS ESPECÍFICAS DE PLATAFORMA${NC}"
     echo "════════════════════════════════════════════════"
-    
+
     OS_TYPE="$(uname -s)"
     case "$OS_TYPE" in
         "Darwin")
@@ -264,7 +264,7 @@ test_platform_specific() {
         "Linux")
             echo -e "${BLUE}Ejecutando pruebas para Linux...${NC}"
             run_test "Comando lsb_release" "command -v lsb_release"
-            
+
             # Detectar WSL
             if [[ -n "${WSL_DISTRO_NAME}" ]] || [[ -n "${WSLENV}" ]] || [[ "$(uname -r)" == *microsoft* ]]; then
                 echo -e "${BLUE}Detectado WSL - Ejecutando pruebas específicas...${NC}"
@@ -288,13 +288,13 @@ show_summary() {
     echo -e "Total de pruebas: ${BLUE}$TESTS_TOTAL${NC}"
     echo -e "Pruebas exitosas: ${GREEN}$TESTS_PASSED${NC}"
     echo -e "Pruebas fallidas: ${RED}$TESTS_FAILED${NC}"
-    
+
     local success_rate=0
     if [[ $TESTS_TOTAL -gt 0 ]]; then
         success_rate=$((TESTS_PASSED * 100 / TESTS_TOTAL))
     fi
     echo -e "Tasa de éxito: ${BLUE}$success_rate%${NC}"
-    
+
     echo "" >> "$TEST_LOG"
     echo "====================================================" >> "$TEST_LOG"
     echo "RESUMEN DE PRUEBAS:" >> "$TEST_LOG"
@@ -303,10 +303,10 @@ show_summary() {
     echo "Fallidas: $TESTS_FAILED" >> "$TEST_LOG"
     echo "Tasa de éxito: $success_rate%" >> "$TEST_LOG"
     echo "====================================================" >> "$TEST_LOG"
-    
+
     echo ""
     echo -e "${CYAN}📋 Log de pruebas guardado en: $TEST_LOG${NC}"
-    
+
     if [[ $TESTS_FAILED -eq 0 ]]; then
         echo -e "${GREEN}🎉 ¡Todas las pruebas pasaron! El sistema está listo.${NC}"
         return 0
@@ -320,17 +320,17 @@ show_summary() {
 main() {
     show_header
     test_start
-    
+
     echo -e "${BLUE}ℹ️  Ejecutando pruebas automatizadas del sistema...${NC}"
     echo ""
-    
+
     test_system_detection
     test_script_files
     test_dependencies
     test_logging_system
     test_vscode_compatibility
     test_platform_specific
-    
+
     show_summary
 }
 

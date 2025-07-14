@@ -8,6 +8,17 @@ installation-*.log
 diagnostic-*.log
 errors-*.log
 
+# Archivos temporales de desarrollo
+install-backup.ps1
+install-fixed.ps1
+install-simple.ps1
+install-complete.ps1
+*-backup.*
+*-temp.*
+*.backup
+*.bak
+*~
+
 # Runtime data
 pids
 *.pid

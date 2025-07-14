@@ -9,23 +9,23 @@ echo "🧹 Limpiando caracteres problemáticos..."
 clean_file() {
     local file="$1"
     local backup="${file}.backup.$(date +%s)"
-    
+
     echo "Limpiando: $file"
-    
+
     # Crear backup
     cp "$file" "$backup"
-    
+
     # Limpiar caracteres problemáticos
     # Remover BOM UTF-8 si existe
     sed -i '1s/^\xEF\xBB\xBF//' "$file" 2>/dev/null || true
-    
+
     # Convertir line endings a Unix
     dos2unix "$file" 2>/dev/null || sed -i 's/\r$//' "$file"
-    
+
     # Remover caracteres de control no imprimibles (excepto tab y newline)
     tr -cd '\11\12\15\40-\176' < "$file" > "${file}.clean"
     mv "${file}.clean" "$file"
-    
+
     echo "✅ $file limpiado (backup: $backup)"
 }
 

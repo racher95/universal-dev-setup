@@ -11,12 +11,14 @@ Este proyecto incluye varios scripts especializados para diferentes propósitos 
 **Propósito:** Diagnosticar la compatibilidad y estado del sistema Windows antes de la instalación.
 
 **¿Cuándo usar?**
+
 - ✅ **Antes de instalar** en sistemas Windows
 - ✅ **Para verificar** compatibilidad Windows/WSL
 - ✅ **Cuando hay problemas** específicos de Windows
 - ✅ **Para soporte técnico** en Windows
 
 **Qué verifica:**
+
 - 🪟 Detección de Windows nativo vs WSL
 - 💻 PowerShell disponibilidad y versión
 - 📦 Gestores de paquetes (Chocolatey, winget)
@@ -24,6 +26,7 @@ Este proyecto incluye varios scripts especializados para diferentes propósitos 
 - 🛠️ Herramientas básicas (VS Code, Git, Node.js)
 
 **Comando:**
+
 ```bash
 ./diagnose-windows.sh
 ```
@@ -37,6 +40,7 @@ Este proyecto incluye varios scripts especializados para diferentes propósitos 
 **Propósito:** Ejecutar pruebas automatizadas completas del sistema en cualquier plataforma.
 
 **¿Cuándo usar?**
+
 - ✅ **Desarrollo y debugging** del proyecto
 - ✅ **Verificar integridad** del sistema
 - ✅ **Pruebas de compatibilidad** multiplataforma
@@ -44,6 +48,7 @@ Este proyecto incluye varios scripts especializados para diferentes propósitos 
 - ✅ **CI/CD pipelines**
 
 **Qué prueba:**
+
 - 🖥️ Detección de sistema operativo
 - 📁 Integridad de archivos del proyecto
 - 🔧 Dependencias del sistema
@@ -52,6 +57,7 @@ Este proyecto incluye varios scripts especializados para diferentes propósitos 
 - 🧪 Funcionalidades específicas de plataforma
 
 **Comando:**
+
 ```bash
 ./run-tests.sh
 ```
@@ -65,12 +71,14 @@ Este proyecto incluye varios scripts especializados para diferentes propósitos 
 **Propósito:** Herramienta para gestionar y visualizar logs de instalación y diagnóstico.
 
 **¿Cuándo usar?**
+
 - ✅ **Ver logs** de instalación o diagnóstico
 - ✅ **Debugging** de problemas
 - ✅ **Preparar logs** para soporte técnico
 - ✅ **Limpieza** de logs antiguos
 
 **Comandos:**
+
 ```bash
 ./view-logs.sh summary    # Resumen de logs
 ./view-logs.sh latest     # Ver log más reciente
@@ -83,6 +91,7 @@ Este proyecto incluye varios scripts especializados para diferentes propósitos 
 ## 🎯 **Guía de Uso por Escenario**
 
 ### **🪟 Instalando en Windows**
+
 ```bash
 # 1. Diagnóstico previo específico de Windows
 ./diagnose-windows.sh
@@ -96,6 +105,7 @@ Este proyecto incluye varios scripts especializados para diferentes propósitos 
 ```
 
 ### **🐧 Instalando en Linux/macOS**
+
 ```bash
 # 1. Pruebas generales del sistema
 ./run-tests.sh
@@ -108,6 +118,7 @@ Este proyecto incluye varios scripts especializados para diferentes propósitos 
 ```
 
 ### **🔧 Desarrollo y Testing**
+
 ```bash
 # Ejecutar todas las pruebas
 ./run-tests.sh
@@ -120,6 +131,7 @@ Este proyecto incluye varios scripts especializados para diferentes propósitos 
 ```
 
 ### **🐛 Debugging y Soporte**
+
 ```bash
 # Para Windows:
 ./diagnose-windows.sh
@@ -134,22 +146,22 @@ Este proyecto incluye varios scripts especializados para diferentes propósitos 
 
 ## 📊 **Matriz de Compatibilidad**
 
-| Script | Windows | WSL | Linux | macOS | Propósito |
-|--------|---------|-----|--------|-------|-----------|
-| `diagnose-windows.sh` | ✅ Óptimo | ✅ Funciona | ⚠️ Limitado | ⚠️ Limitado | Diagnóstico Windows |
-| `run-tests.sh` | ✅ Funciona | ✅ Óptimo | ✅ Óptimo | ✅ Óptimo | Pruebas generales |
-| `view-logs.sh` | ✅ Funciona | ✅ Funciona | ✅ Funciona | ✅ Funciona | Gestión de logs |
+| Script                | Windows     | WSL         | Linux       | macOS       | Propósito           |
+| --------------------- | ----------- | ----------- | ----------- | ----------- | ------------------- |
+| `diagnose-windows.sh` | ✅ Óptimo   | ✅ Funciona | ⚠️ Limitado | ⚠️ Limitado | Diagnóstico Windows |
+| `run-tests.sh`        | ✅ Funciona | ✅ Óptimo   | ✅ Óptimo   | ✅ Óptimo   | Pruebas generales   |
+| `view-logs.sh`        | ✅ Funciona | ✅ Funciona | ✅ Funciona | ✅ Funciona | Gestión de logs     |
 
 ## 🔍 **Diferencias Clave**
 
-| Aspecto | `diagnose-windows.sh` | `run-tests.sh` |
-|---------|----------------------|----------------|
-| **Objetivo** | Diagnosticar Windows | Probar todo el sistema |
-| **Audiencia** | Usuario final | Desarrollador/Admin |
-| **Frecuencia** | Antes de instalar | Durante desarrollo |
-| **Plataforma** | Específico Windows | Multiplataforma |
-| **Salida** | Diagnóstico legible | Resultados de pruebas |
-| **Logs** | `logs/diagnostic-*.log` | `test-results/test-*.log` |
+| Aspecto        | `diagnose-windows.sh`   | `run-tests.sh`            |
+| -------------- | ----------------------- | ------------------------- |
+| **Objetivo**   | Diagnosticar Windows    | Probar todo el sistema    |
+| **Audiencia**  | Usuario final           | Desarrollador/Admin       |
+| **Frecuencia** | Antes de instalar       | Durante desarrollo        |
+| **Plataforma** | Específico Windows      | Multiplataforma           |
+| **Salida**     | Diagnóstico legible     | Resultados de pruebas     |
+| **Logs**       | `logs/diagnostic-*.log` | `test-results/test-*.log` |
 
 ## 💡 **Recomendaciones**
 
