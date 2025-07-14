@@ -37,7 +37,7 @@ function Find-GitBash {
         "C:\Program Files\Git\bin\bash.exe",
         "C:\Program Files (x86)\Git\bin\bash.exe"
     )
-    
+
     foreach ($path in $paths) {
         if (Test-Path $path) {
             return $path
@@ -48,7 +48,7 @@ function Find-GitBash {
 
 function Install-GitBash {
     Write-Info "Instalando Git Bash..."
-    
+
     # Intentar con Chocolatey
     if (Get-Command choco -ErrorAction SilentlyContinue) {
         Write-Info "Usando Chocolatey para instalar Git..."
@@ -61,7 +61,7 @@ function Install-GitBash {
             Write-Warning "Error con Chocolatey, intentando winget..."
         }
     }
-    
+
     # Intentar con winget
     if (Get-Command winget -ErrorAction SilentlyContinue) {
         Write-Info "Usando winget para instalar Git..."
@@ -74,14 +74,14 @@ function Install-GitBash {
             Write-Warning "Error con winget, instalando Chocolatey..."
         }
     }
-    
+
     # Instalar Chocolatey primero
     Write-Info "Instalando Chocolatey..."
     try {
         Set-ExecutionPolicy Bypass -Scope Process -Force
         [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
         iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-        
+
         Write-Info "Instalando Git con Chocolatey..."
         choco install git -y
         Start-Sleep -Seconds 3
@@ -95,14 +95,14 @@ function Install-GitBash {
 
 function Start-BashScript {
     param([string]$BashPath)
-    
+
     Write-Info "Lanzando script principal en Git Bash..."
     $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
     $unixPath = $scriptDir -replace "\\", "/" -replace "C:", "/c"
-    
+
     # Ejecutar instalación completa automáticamente
     & $BashPath -c "cd '$unixPath' && ./install.sh --auto"
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Success "Instalacion completada exitosamente!"
     } else {
@@ -162,9 +162,9 @@ if ($bashPath) {
     Write-Warning "Git Bash no encontrado"
     Write-Info "Iniciando instalacion automatica..."
     Write-Host ""
-    
+
     $bashPath = Install-GitBash
-    
+
     if ($bashPath) {
         Write-Success "Git Bash instalado correctamente"
         Write-Host ""

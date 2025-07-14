@@ -51,8 +51,8 @@ Los logs se generan automáticamente sin intervención:
 ./install.sh --auto
 # → Genera: logs/installation-YYYYMMDD-HHMMSS.log
 
-# Durante diagnóstico
-./test-windows.sh
+# Durante diagnóstico específico de Windows
+./diagnose-windows.sh
 # → Genera: logs/diagnostic-YYYYMMDD-HHMMSS.log
 ```
 
@@ -94,10 +94,16 @@ Estado final: COMPLETADO
    cat logs/errors-YYYYMMDD-HHMMSS.log
    ```
 
-3. **Diagnóstico del sistema:**
+3. **Diagnóstico específico de Windows:**
    ```bash
-   ./test-windows.sh
+   ./diagnose-windows.sh
    cat logs/diagnostic-YYYYMMDD-HHMMSS.log
+   ```
+
+4. **Pruebas generales del sistema:**
+   ```bash
+   ./run-tests.sh
+   cat test-results/test-YYYYMMDD-HHMMSS.log
    ```
 
 ### **Comandos Útiles para Compartir:**

@@ -3,18 +3,21 @@
 ## 🚀 Método Recomendado: PowerShell Bootstrap
 
 ### 1. Descarga el proyecto
+
 ```powershell
 git clone https://github.com/tu-usuario/universal-dev-setup.git
 cd universal-dev-setup
 ```
 
 ### 2. Ejecuta el script PowerShell
+
 ```powershell
 # PowerShell como administrador (recomendado)
 .\install.ps1
 ```
 
 **¿Qué hace este script?**
+
 1. ✅ **Detecta automáticamente** si Git Bash está instalado
 2. ✅ **Instala Git Bash automáticamente** si no está presente
 3. ✅ **Se relanza automáticamente** en Git Bash
@@ -29,16 +32,19 @@ PowerShell → Instala Git Bash → Relanza en Bash → Instalación Completa
 ### Paso a Paso:
 
 1. **Inicio en PowerShell**
+
    - Verifica permisos de administrador
    - Detecta si Git Bash está instalado
 
 2. **Instalación Automática de Git Bash** (si es necesario)
+
    - Intenta con Chocolatey (más rápido)
    - Fallback a winget
    - Fallback a descarga directa
    - Instalación silenciosa
 
 3. **Relanzamiento en Git Bash**
+
    - Cambia automáticamente a Git Bash
    - Ejecuta `./install.sh`
    - Continúa con la instalación normal
@@ -53,16 +59,19 @@ PowerShell → Instala Git Bash → Relanza en Bash → Instalación Completa
 ## 🛠️ Opciones Avanzadas
 
 ### Forzar instalación
+
 ```powershell
 .\install.ps1 -Force
 ```
 
 ### Saltar instalación de Git Bash
+
 ```powershell
 .\install.ps1 -SkipBashInstall
 ```
 
 ### Ver ayuda
+
 ```powershell
 .\install.ps1 -Help
 ```
@@ -70,6 +79,7 @@ PowerShell → Instala Git Bash → Relanza en Bash → Instalación Completa
 ## 📋 Métodos Alternativos
 
 ### Método 1: Si ya tienes Git Bash
+
 ```bash
 # Git Bash como administrador
 git clone https://github.com/tu-usuario/universal-dev-setup.git
@@ -78,12 +88,14 @@ cd universal-dev-setup
 ```
 
 ### Método 2: Archivo .bat
+
 ```cmd
 # Ejecutar install.bat
 install.bat
 ```
 
 ### Método 3: WSL
+
 ```bash
 # Dentro de WSL (Ubuntu, etc.)
 git clone https://github.com/tu-usuario/universal-dev-setup.git
@@ -104,7 +116,7 @@ Antes de la instalación, puedes verificar tu sistema:
 
 ```bash
 # En Git Bash (si ya lo tienes)
-./test-windows.sh
+./diagnose-windows.sh
 ```
 
 ## 🎯 Características Específicas de Windows
@@ -119,19 +131,23 @@ Antes de la instalación, puedes verificar tu sistema:
 ## 🐛 Solución de Problemas
 
 ### Error: "No se puede ejecutar scripts"
+
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
 ### Error: "Git Bash no encontrado"
+
 - El script lo instala automáticamente
 - O instala manualmente desde: https://git-scm.com/download/win
 
 ### Error: "Permisos insuficientes"
+
 - Ejecuta PowerShell como administrador
 - O usa `.\install.ps1 -Force` para continuar
 
 ### Error: "Chocolatey no se instala"
+
 - Verifica conexión a internet
 - El script intentará métodos alternativos
 - Instalación manual: https://chocolatey.org/install
@@ -149,7 +165,8 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ## 📞 Soporte
 
 Si encuentras problemas:
-1. Ejecuta `.\test-windows.sh` para diagnóstico
+
+1. Ejecuta `.\diagnose-windows.sh` para diagnóstico
 2. Revisa los logs en la terminal
 3. Verifica permisos de administrador
 4. Reporta problemas con capturas de pantalla

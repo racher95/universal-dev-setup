@@ -17,7 +17,7 @@ install_vscode_extensions() {
     local extensions=(
         # Idioma español
         "ms-ceintl.vscode-language-pack-es"
-        
+
         # Esenciales
         "esbenp.prettier-vscode"
         "dbaeumer.vscode-eslint"
@@ -138,7 +138,7 @@ generate_base_settings() {
   // === IDIOMA Y LOCALIZACIÓN ===
   "locale": "es",
   "update.enableWindowsBackgroundUpdates": false,
-  
+
   "workbench.iconTheme": "material-icon-theme",
   "workbench.colorTheme": "One Dark Pro",
   "workbench.startupEditor": "none",

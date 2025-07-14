@@ -117,7 +117,7 @@ bash install.sh
 
 ```bash
 # Verificar compatibilidad antes de instalar
-./test-windows.sh
+./diagnose-windows.sh
 ```
 
 ## 📋 Opciones de instalación
@@ -215,6 +215,24 @@ El script aplica configuraciones optimizadas para desarrollo web:
 - **[🪟 Instalación en Windows](WINDOWS.md)** - Guía específica para Windows con PowerShell
 - **[🔧 Configuración de Terminal](TERMINAL-CONFIG.md)** - Setup avanzado de terminales
 - **[🧪 Testing y Validación](TESTING.md)** - Cómo probar y validar la instalación
+- **[🛠️ Scripts de Diagnóstico](SCRIPTS.md)** - Guía completa de scripts de diagnóstico y pruebas
+
+## 🔍 **Diagnóstico y Pruebas**
+
+### Para Windows:
+```bash
+# Diagnóstico específico antes de instalar
+./diagnose-windows.sh
+```
+
+### Para cualquier plataforma:
+```bash
+# Pruebas automatizadas completas
+./run-tests.sh
+
+# Gestión de logs
+./view-logs.sh summary
+```
 
 ## 🤝 Contribuir
 

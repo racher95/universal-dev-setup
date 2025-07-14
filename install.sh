@@ -61,13 +61,13 @@ initialize_logging() {
     echo "Versión del script: 3.0" >> "$LOG_FILE"
     echo "====================================================" >> "$LOG_FILE"
     echo "" >> "$LOG_FILE"
-    
+
     # Log de errores separado
     echo "=== LOG DE ERRORES - UNIVERSAL DEVELOPMENT SETUP ===" > "$ERROR_LOG"
     echo "Fecha de inicio: $start_time" >> "$ERROR_LOG"
     echo "====================================================" >> "$ERROR_LOG"
     echo "" >> "$ERROR_LOG"
-    
+
     # Guardar tiempo de inicio para calcular duración
     export start_time
 }
@@ -83,23 +83,23 @@ show_header() {
     echo -e "${NC}"
 }
 
-show_status() { 
+show_status() {
     echo -e "${GREEN}✅ $1${NC}"
     log_success "$1"
 }
-show_warning() { 
+show_warning() {
     echo -e "${YELLOW}⚠️  $1${NC}"
     log_warning "$1"
 }
-show_error() { 
+show_error() {
     echo -e "${RED}❌ $1${NC}"
     log_error "$1"
 }
-show_info() { 
+show_info() {
     echo -e "${BLUE}ℹ️  $1${NC}"
     log_info "$1"
 }
-show_step() { 
+show_step() {
     echo -e "${PURPLE}🔧 $1${NC}"
     log_info "STEP: $1"
 }
@@ -297,7 +297,7 @@ show_system_info() {
 # Función para mostrar información del sistema Windows
 show_windows_info() {
     echo -e "\n${BLUE}=== INFORMACIÓN DEL SISTEMA WINDOWS ===${NC}"
-    
+
     # Verificar tipo de entorno Windows
     if [[ -n "$WSLENV" ]]; then
         echo -e "🔹 Entorno: ${YELLOW}WSL (Windows Subsystem for Linux)${NC}"
@@ -362,7 +362,7 @@ check_admin_windows() {
 finalize_logging() {
     local end_time=$(date)
     local duration=$(($(date +%s) - $(date -d "$start_time" +%s) 2>/dev/null || 0))
-    
+
     echo "" >> "$LOG_FILE"
     echo "====================================================" >> "$LOG_FILE"
     echo "Instalación finalizada: $end_time" >> "$LOG_FILE"
@@ -371,7 +371,7 @@ finalize_logging() {
     fi
     echo "Estado final: COMPLETADO" >> "$LOG_FILE"
     echo "====================================================" >> "$LOG_FILE"
-    
+
     # Resumen en log de errores si hay errores
     if [[ -s "$ERROR_LOG" ]]; then
         echo "" >> "$ERROR_LOG"
@@ -405,7 +405,7 @@ main() {
         echo -e "${CYAN}🚀 INICIANDO INSTALACIÓN AUTOMÁTICA COMPLETA...${NC}"
         echo ""
         full_installation
-        
+
         echo ""
         echo -e "${GREEN}🎉 ¡Instalación automática completada!${NC}"
         echo -e "${BLUE}ℹ️  Para más opciones, ejecuta: ./install.sh${NC}"
@@ -469,7 +469,7 @@ show_menu() {
     echo "8. 🔧 Configurar Git (usuario/email)"
     echo "9. 📚 Ayuda y documentación"
     echo "10. ❌ Salir"
-    
+
     # Mostrar advertencias específicas para Windows
     if [[ "$SYSTEM" == "Windows" ]]; then
         echo ""
@@ -499,13 +499,13 @@ full_installation() {
     show_status "¡Instalación completa terminada!"
     echo ""
     echo -e "${GREEN}🎉 ¡Tu entorno de desarrollo está listo!${NC}"
-    
+
     # Finalizar logging
     finalize_logging
-    
+
     # Mostrar información específica de VS Code
     show_vscode_post_install_info
-    
+
     echo -e "${BLUE}ℹ️  Reinicia VS Code para aplicar todas las configuraciones${NC}"
     echo -e "${CYAN}📋 Los logs se guardaron en: $LOG_FILE${NC}"
     if [[ -s "$ERROR_LOG" ]]; then

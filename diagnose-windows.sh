@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Script de prueba rápida para Windows
-# Este script verifica las funciones básicas antes de la instalación completa
+# 🔍 Diagnóstico del Sistema para Windows
+# Este script verifica la compatibilidad y estado del sistema Windows
+# antes de ejecutar la instalación completa de Universal Development Setup
 
 # Colores para output
 RED='\033[0;31m'
@@ -47,8 +48,11 @@ finalize_diagnostic_log() {
 # Inicializar logging
 initialize_diagnostic_log
 
-echo -e "${CYAN}🔍 PRUEBA RÁPIDA PARA WINDOWS${NC}"
+echo -e "${CYAN}🔍 DIAGNÓSTICO DEL SISTEMA WINDOWS${NC}"
 echo "========================================"
+echo -e "${BLUE}ℹ️  Este script verifica la compatibilidad de tu sistema Windows${NC}"
+echo -e "${BLUE}ℹ️  con Universal Development Setup antes de la instalación${NC}"
+echo ""
 log_diagnostic "=== INICIANDO DIAGNÓSTICO ==="
 
 # Detectar sistema operativo
@@ -182,6 +186,7 @@ fi
 
 echo -e "\n${BLUE}🚀 Para ejecutar la instalación completa, usa: ./install.sh${NC}"
 echo -e "${CYAN}📋 Diagnóstico guardado en: $DIAG_LOG${NC}"
+echo -e "${BLUE}ℹ️  Comparte este log si necesitas soporte técnico${NC}"
 
 # Finalizar logging de diagnóstico
 finalize_diagnostic_log

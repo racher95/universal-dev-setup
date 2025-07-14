@@ -67,7 +67,7 @@ if %errorlevel% == 0 (
     echo.
     echo Instalando Chocolatey primero...
     powershell -Command "Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))"
-    
+
     if %errorlevel% == 0 (
         echo [OK] Chocolatey instalado
         echo Instalando Git...
