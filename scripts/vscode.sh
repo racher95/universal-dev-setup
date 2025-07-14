@@ -15,6 +15,9 @@ install_vscode_extensions() {
 
     # Lista de extensiones esenciales
     local extensions=(
+        # Idioma español
+        "ms-ceintl.vscode-language-pack-es"
+        
         # Esenciales
         "esbenp.prettier-vscode"
         "dbaeumer.vscode-eslint"
@@ -132,6 +135,10 @@ configure_vscode_settings() {
 generate_base_settings() {
     cat << 'EOF'
 {
+  // === IDIOMA Y LOCALIZACIÓN ===
+  "locale": "es",
+  "update.enableWindowsBackgroundUpdates": false,
+  
   "workbench.iconTheme": "material-icon-theme",
   "workbench.colorTheme": "One Dark Pro",
   "workbench.startupEditor": "none",
@@ -273,6 +280,28 @@ generate_base_settings() {
   "terminal.integrated.copyOnSelection": true,
   "terminal.integrated.rightClickBehavior": "copyPaste",
   "terminal.integrated.scrollback": 10000,
+  "terminal.integrated.defaultProfile.windows": "Ubuntu (WSL)",
+  "terminal.integrated.profiles.windows": {
+    "Ubuntu (WSL)": {
+      "path": "C:\\Windows\\System32\\wsl.exe",
+      "args": ["-d", "Ubuntu"],
+      "icon": "terminal-ubuntu"
+    },
+    "PowerShell": {
+      "source": "PowerShell",
+      "icon": "terminal-powershell"
+    },
+    "Command Prompt": {
+      "path": "C:\\Windows\\System32\\cmd.exe",
+      "args": [],
+      "icon": "terminal-cmd"
+    },
+    "Git Bash": {
+      "path": "C:\\Program Files\\Git\\bin\\bash.exe",
+      "args": [],
+      "icon": "terminal-bash"
+    }
+  },
 
   // === SECURITY & TRUST ===
   "security.workspace.trust.untrustedFiles": "open",
@@ -352,14 +381,7 @@ add_wsl_settings() {
   // === WSL SPECIFIC ===
   "remote.WSL.fileWatcher.polling": true,
   "remote.WSL.useShellEnvironment": true,
-  "terminal.integrated.defaultProfile.windows": "Ubuntu (WSL)",
-  "terminal.integrated.profiles.windows": {
-    "Ubuntu (WSL)": {
-      "path": "C:\\Windows\\System32\\wsl.exe",
-      "args": ["-d", "Ubuntu"],
-      "icon": "terminal-ubuntu"
-    }
-  }
+  "remote.WSL.defaultDistribution": "Ubuntu"
 }
 EOF
 )
@@ -452,4 +474,32 @@ check_vscode_config() {
         local ext_count=$(code --list-extensions | wc -l)
         show_info "Extensiones instaladas: $ext_count"
     fi
+}
+
+# Función para mostrar información post-instalación de VS Code
+show_vscode_post_install_info() {
+    echo -e "\n${CYAN}📋 INFORMACIÓN POST-INSTALACIÓN DE VS CODE:${NC}"
+    echo "════════════════════════════════════════════════════════"
+    echo -e "${YELLOW}🌐 Cambio de idioma a español:${NC}"
+    echo "1. Abre VS Code"
+    echo "2. Presiona Ctrl+Shift+P (Cmd+Shift+P en macOS)"
+    echo "3. Escribe: Configure Display Language"
+    echo "4. Selecciona 'Español' de la lista"
+    echo "5. Reinicia VS Code"
+    echo ""
+    echo -e "${BLUE}ℹ️  El paquete de idioma español ya está instalado automáticamente${NC}"
+    echo -e "${BLUE}ℹ️  Si no aparece español, espera unos minutos y reinicia VS Code${NC}"
+    echo ""
+    echo -e "${YELLOW}🔤 Fuentes instaladas:${NC}"
+    echo "• Fira Code (con ligaduras)"
+    echo "• JetBrains Mono"
+    echo "• Cascadia Code"
+    echo "• MesloLGS Nerd Font"
+    echo ""
+    echo -e "${YELLOW}⚙️  Configuraciones aplicadas:${NC}"
+    echo "• Tema: One Dark Pro"
+    echo "• Iconos: Material Icon Theme"
+    echo "• Formato automático al guardar"
+    echo "• Configuración de terminal optimizada"
+    echo ""
 }

@@ -22,18 +22,52 @@ Un script inteligente que detecta automáticamente tu sistema operativo y config
 | macOS (nativo)   | ✅     | Homebrew + VS Code nativo |
 | Linux (nativo)   | ✅     | APT + VS Code nativo      |
 | Windows WSL      | ✅     | APT + VS Code en Windows  |
-| Windows (nativo) | 🔄     | En desarrollo             |
+| Windows (nativo) | ✅     | Auto-instalación de Chocolatey, dependencias y fuentes |
 
 ## 🛠️ Instalación
 
-### Instalación rápida (un comando):
+### 🪟 **Windows (Recomendado) - Bootstrap Automático**
 
+#### ✨ Nuevo: Instalación Automática de Git Bash
+```powershell
+# PowerShell como administrador - ¡Un solo comando!
+git clone https://github.com/tu-usuario/universal-dev-setup.git
+cd universal-dev-setup
+.\install.ps1
+```
+
+**¿Qué hace el script PowerShell?**
+1. 🔍 **Detecta** si Git Bash está instalado
+2. 📦 **Instala Git Bash automáticamente** si no existe
+3. 🔄 **Se relanza en Git Bash** automáticamente
+4. 🚀 **Ejecuta la instalación completa** desde bash
+
+#### Métodos Alternativos:
+
+**Git Bash (si ya lo tienes):**
+```bash
+# Git Bash como administrador
+git clone https://github.com/tu-usuario/universal-dev-setup.git
+cd universal-dev-setup
+./install.sh
+```
+
+**Archivo .bat:**
+```cmd
+# Ejecutar directamente
+install.bat
+```
+
+**📖 Guía completa:** Ver [WINDOWS.md](WINDOWS.md) para instrucciones detalladas
+
+### 🐧 **Linux/macOS/WSL**
+
+#### Instalación rápida (un comando):
 ```bash
 curl -fsSL https://raw.githubusercontent.com/tu-usuario/universal-dev-setup/main/install.sh | bash
 ```
 
-### Instalación manual:
-
+#### Instalación manual:
 ```bash
 # Clonar el repositorio
 git clone https://github.com/tu-usuario/universal-dev-setup.git

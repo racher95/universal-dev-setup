@@ -373,6 +373,10 @@ full_installation() {
     show_status "¡Instalación completa terminada!"
     echo ""
     echo -e "${GREEN}🎉 ¡Tu entorno de desarrollo está listo!${NC}"
+    
+    # Mostrar información específica de VS Code
+    show_vscode_post_install_info
+    
     echo -e "${BLUE}ℹ️  Reinicia VS Code para aplicar todas las configuraciones${NC}"
 }
 
