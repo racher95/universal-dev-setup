@@ -34,7 +34,7 @@ show_step() { echo -e "${PURPLE}🔧 $1${NC}"; }
 # Función para detectar el sistema operativo
 detect_system() {
     OS_TYPE="$(uname -s)"
-    
+
     case "$OS_TYPE" in
         "Darwin")
             SYSTEM="macOS"
@@ -64,7 +64,7 @@ detect_system() {
             exit 1
             ;;
     esac
-    
+
     echo -e "${SYSTEM_ICON} Sistema detectado: ${CYAN}$SYSTEM_NAME${NC}"
 }
 
@@ -74,27 +74,27 @@ detect_wsl() {
     if [[ -n "${WSL_DISTRO_NAME}" ]]; then
         return 0
     fi
-    
+
     # Método 2: Variable WSLENV existe
     if [[ -n "${WSLENV}" ]]; then
         return 0
     fi
-    
+
     # Método 3: /proc/version contiene "microsoft" o "WSL"
     if [[ -f "/proc/version" ]] && grep -qi "microsoft\|wsl" /proc/version; then
         return 0
     fi
-    
+
     # Método 4: /proc/sys/kernel/osrelease contiene "microsoft" o "WSL"
     if [[ -f "/proc/sys/kernel/osrelease" ]] && grep -qi "microsoft\|wsl" /proc/sys/kernel/osrelease; then
         return 0
     fi
-    
+
     # Método 5: Directorio /mnt/c existe (típico en WSL)
     if [[ -d "/mnt/c" ]]; then
         return 0
     fi
-    
+
     return 1
 }
 
@@ -130,7 +130,7 @@ setup_paths() {
             PACKAGE_MANAGER="choco"  # Assumimos Chocolatey
             ;;
     esac
-    
+
     show_info "Configuración para: $SYSTEM_NAME"
     show_info "VS Code Settings: $VSCODE_SETTINGS_DIR"
     show_info "Directorio de fuentes: $FONT_DIR"
@@ -140,7 +140,7 @@ setup_paths() {
 # Función para verificar requisitos previos
 check_prerequisites() {
     show_step "Verificando requisitos previos..."
-    
+
     case "$SYSTEM" in
         "macOS")
             if ! command -v brew &> /dev/null; then
@@ -162,7 +162,7 @@ check_prerequisites() {
             fi
             ;;
     esac
-    
+
     # Verificar VS Code
     if ! command -v code &> /dev/null; then
         show_warning "VS Code no está en PATH"
@@ -180,7 +180,7 @@ check_prerequisites() {
     else
         show_status "VS Code encontrado"
     fi
-    
+
     # Verificar Node.js
     if command -v node &> /dev/null; then
         show_status "Node.js $(node --version) encontrado"
@@ -197,12 +197,14 @@ show_system_info() {
     echo -e "   Sistema: $SYSTEM_NAME"
     echo -e "   Arquitectura: $(uname -m)"
     echo -e "   Kernel: $(uname -r)"
-    
+
     if [[ "$SYSTEM" == "WSL" ]]; then
         echo -e "   Distribución WSL: ${WSL_DISTRO_NAME:-N/A}"
-        echo -e "   Versión WSL: $(wsl.exe --version 2>/dev/null | head -1 || echo 'N/A')"
+        # Usar comando alternativo para evitar caracteres corruptos
+        WSL_VERSION=$(wsl.exe --version 2>/dev/null | grep -E "Versión|Version" | head -1 | tr -cd '[:print:]' || echo 'N/A')
+        echo -e "   Versión WSL: ${WSL_VERSION:-N/A}"
     fi
-    
+
     if [[ "$SYSTEM" == "Linux" ]]; then
         if command -v lsb_release &> /dev/null; then
             echo -e "   Distribución: $(lsb_release -d | cut -f2)"
@@ -210,7 +212,7 @@ show_system_info() {
             echo -e "   Distribución: $(grep PRETTY_NAME /etc/os-release | cut -d'=' -f2 | tr -d '\"')"
         fi
     fi
-    
+
     echo ""
 }
 
@@ -221,18 +223,19 @@ main() {
     setup_paths
     check_prerequisites
     show_system_info
-    
+
     # Cargar módulos específicos
     source "$(dirname "$0")/scripts/dependencies.sh"
     source "$(dirname "$0")/scripts/fonts.sh"
     source "$(dirname "$0")/scripts/vscode.sh"
     source "$(dirname "$0")/scripts/npm-tools.sh"
-    
+    source "$(dirname "$0")/scripts/git-config.sh"
+
     # Mostrar menú
     while true; do
         show_menu
-        read -p "Selecciona una opción (1-9): " choice
-        
+        read -p "Selecciona una opción (1-10): " choice
+
         case $choice in
             1) check_status ;;
             2) full_installation ;;
@@ -241,16 +244,17 @@ main() {
             5) install_vscode_extensions ;;
             6) configure_vscode_settings ;;
             7) install_npm_tools ;;
-            8) show_help ;;
-            9) 
+            8) configure_git ;;
+            9) show_help ;;
+            10)
                 echo -e "${CYAN}👋 ¡Gracias por usar Universal Development Setup!${NC}"
                 exit 0
                 ;;
-            *) 
-                show_error "Opción inválida. Selecciona 1-9."
+            *)
+                show_error "Opción inválida. Selecciona 1-10."
                 ;;
         esac
-        
+
         echo ""
         read -p "Presiona Enter para continuar..."
     done
@@ -267,21 +271,22 @@ show_menu() {
     echo "5. 🔌 Solo extensiones VS Code"
     echo "6. ⚙️  Solo configuración VS Code"
     echo "7. 🛠️  Solo herramientas npm"
-    echo "8. 📚 Ayuda y documentación"
-    echo "9. ❌ Salir"
+    echo "8. � Configurar Git (usuario/email)"
+    echo "9. 📚 Ayuda y documentación"
+    echo "10. ❌ Salir"
     echo ""
 }
 
 # Función para instalación completa
 full_installation() {
     show_step "Iniciando instalación completa..."
-    
+
     install_base_dependencies
     install_fonts
     install_vscode_extensions
     configure_vscode_settings
     install_npm_tools
-    
+
     show_status "¡Instalación completa terminada!"
     echo ""
     echo -e "${GREEN}🎉 ¡Tu entorno de desarrollo está listo!${NC}"
@@ -291,11 +296,11 @@ full_installation() {
 # Función para verificar estado
 check_status() {
     show_step "Verificando estado actual del sistema..."
-    
+
     echo ""
     echo -e "${CYAN}📊 ESTADO ACTUAL:${NC}"
     echo "═══════════════════════════════════════"
-    
+
     # Verificar VS Code
     if command -v code &> /dev/null; then
         show_status "VS Code encontrado"
@@ -304,13 +309,13 @@ check_status() {
         else
             show_warning "Configuración VS Code no encontrada"
         fi
-        
+
         ext_count=$(code --list-extensions 2>/dev/null | wc -l)
         echo -e "   🔌 Extensiones instaladas: $ext_count"
     else
         show_warning "VS Code no encontrado"
     fi
-    
+
     # Verificar Node.js
     if command -v node &> /dev/null; then
         show_status "Node.js $(node --version)"
@@ -320,7 +325,7 @@ check_status() {
     else
         show_warning "Node.js no instalado"
     fi
-    
+
     # Verificar fuentes
     case "$SYSTEM" in
         "macOS")
@@ -338,12 +343,25 @@ check_status() {
             fi
             ;;
     esac
-    
+
     # Verificar herramientas npm
     if command -v live-server &> /dev/null; then
         show_status "Herramientas npm instaladas"
     else
         show_warning "Herramientas npm no encontradas"
+    fi
+
+    # Verificar configuración Git
+    if command -v git &> /dev/null; then
+        git_name=$(git config --global user.name 2>/dev/null)
+        git_email=$(git config --global user.email 2>/dev/null)
+        if [[ -n "$git_name" && -n "$git_email" ]]; then
+            show_status "Git configurado ($git_name)"
+        else
+            show_warning "Git no configurado"
+        fi
+    else
+        show_warning "Git no instalado"
     fi
 }
 

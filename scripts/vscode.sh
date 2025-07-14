@@ -35,6 +35,8 @@ install_vscode_extensions() {
         # Git
         "eamodio.gitlens"
         "mhutchie.git-graph"
+        "github.vscode-github-actions"
+        "github.vscode-pull-request-github"
 
         # Colaboración
         "ms-vsliveshare.vsliveshare"

@@ -17,12 +17,12 @@ Un script inteligente que detecta automáticamente tu sistema operativo y config
 
 ## 💻 Sistemas Soportados
 
-| Sistema | Estado | Notas |
-|---------|--------|-------|
-| macOS (nativo) | ✅ | Homebrew + VS Code nativo |
-| Linux (nativo) | ✅ | APT + VS Code nativo |
-| Windows WSL | ✅ | APT + VS Code en Windows |
-| Windows (nativo) | 🔄 | En desarrollo |
+| Sistema          | Estado | Notas                     |
+| ---------------- | ------ | ------------------------- |
+| macOS (nativo)   | ✅     | Homebrew + VS Code nativo |
+| Linux (nativo)   | ✅     | APT + VS Code nativo      |
+| Windows WSL      | ✅     | APT + VS Code en Windows  |
+| Windows (nativo) | 🔄     | En desarrollo             |
 
 ## 🛠️ Instalación
 
@@ -59,17 +59,20 @@ El script ofrece un menú interactivo con las siguientes opciones:
 ## 🔧 Componentes instalados
 
 ### Dependencias base:
+
 - Git, curl, wget
 - Node.js (LTS) + npm
 - Build tools según el sistema
 
 ### Fuentes:
+
 - **Fira Code** - Fuente con ligaduras
 - **JetBrains Mono** - Fuente moderna
 - **Cascadia Code** - Fuente de Microsoft
 - **MesloLGS Nerd Font** - Para terminales con iconos
 
 ### Extensiones VS Code:
+
 - **Prettier** - Formateo de código
 - **ESLint** - Linting
 - **Live Server** - Servidor local
@@ -83,6 +86,7 @@ El script ofrece un menú interactivo con las siguientes opciones:
 - Y más...
 
 ### Herramientas npm:
+
 - live-server, prettier, eslint
 - typescript, npm-check-updates
 - Y más utilidades
@@ -109,16 +113,19 @@ El script aplica configuraciones optimizadas para desarrollo web:
 ## 🌐 Compatibilidad
 
 ### macOS:
+
 - Homebrew para gestión de paquetes
 - VS Code desde el sitio oficial
 - Fuentes via Homebrew Cask
 
 ### Linux:
+
 - APT para gestión de paquetes
 - VS Code desde repositorio oficial
 - Fuentes descargadas manualmente
 
 ### Windows WSL:
+
 - APT dentro de WSL
 - VS Code en Windows (acceso desde WSL)
 - Configuración híbrida optimizada

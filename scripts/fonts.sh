@@ -5,7 +5,7 @@
 
 install_fonts() {
     show_step "Instalando fuentes de desarrollo para $SYSTEM..."
-    
+
     case "$SYSTEM" in
         "macOS")
             install_macos_fonts
@@ -17,7 +17,7 @@ install_fonts() {
             install_windows_fonts
             ;;
     esac
-    
+
     show_status "Fuentes de desarrollo instaladas"
 }
 
@@ -27,7 +27,7 @@ install_macos_fonts() {
         show_info "Agregando repositorio de fuentes..."
         brew tap homebrew/cask-fonts
     fi
-    
+
     # Lista de fuentes a instalar
     fonts=(
         "font-fira-code"
@@ -37,7 +37,7 @@ install_macos_fonts() {
         "font-source-code-pro"
         "font-hack"
     )
-    
+
     for font in "${fonts[@]}"; do
         if ! brew list --cask "$font" &> /dev/null; then
             show_info "Instalando $font..."
@@ -52,25 +52,25 @@ install_linux_fonts() {
     # Crear directorio de fuentes
     mkdir -p "$FONT_DIR"
     cd /tmp
-    
+
     # Fira Code
     install_font_fira_code
-    
+
     # JetBrains Mono
     install_font_jetbrains_mono
-    
+
     # Cascadia Code
     install_font_cascadia_code
-    
+
     # MesloLGS Nerd Font
     install_font_meslo_nerd
-    
+
     # Source Code Pro
     install_font_source_code_pro
-    
+
     # Hack Font
     install_font_hack
-    
+
     # Actualizar cache de fuentes
     show_info "Actualizando cache de fuentes..."
     sudo fc-cache -f -v > /dev/null 2>&1
@@ -140,7 +140,7 @@ install_font_hack() {
 
 install_windows_fonts() {
     show_warning "Instalación de fuentes en Windows requiere permisos de administrador"
-    
+
     if command -v choco &> /dev/null; then
         show_info "Usando Chocolatey para instalar fuentes..."
         choco install -y firacode jetbrainsmono cascadiacodepl hackfont
@@ -150,7 +150,7 @@ install_windows_fonts() {
         echo "• JetBrains Mono: https://www.jetbrains.com/mono/"
         echo "• Cascadia Code: https://github.com/microsoft/cascadia-code/releases"
         echo "• MesloLGS Nerd Font: https://github.com/romkatv/powerlevel10k-media"
-        
+
         show_info "Descarga las fuentes y haz doble clic para instalar"
     fi
 }
@@ -158,7 +158,7 @@ install_windows_fonts() {
 # Función para verificar fuentes instaladas
 check_fonts() {
     show_step "Verificando fuentes instaladas..."
-    
+
     case "$SYSTEM" in
         "macOS")
             fonts_to_check=(
@@ -167,7 +167,7 @@ check_fonts() {
                 "CascadiaCode-Regular"
                 "MesloLGS NF Regular"
             )
-            
+
             for font in "${fonts_to_check[@]}"; do
                 if ls "$FONT_DIR"/*"$font"* &> /dev/null; then
                     show_status "$font encontrada"
@@ -183,7 +183,7 @@ check_fonts() {
                 "CascadiaCode-Regular.ttf"
                 "MesloLGS NF Regular.ttf"
             )
-            
+
             for font in "${fonts_to_check[@]}"; do
                 if [[ -f "$FONT_DIR/$font" ]]; then
                     show_status "$font encontrada"
@@ -201,7 +201,7 @@ check_fonts() {
 # Función para listar fuentes disponibles
 list_fonts() {
     show_step "Listando fuentes disponibles..."
-    
+
     case "$SYSTEM" in
         "macOS")
             ls -la "$FONT_DIR"/ | grep -E "\.(ttf|otf)" | head -20
