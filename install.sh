@@ -14,7 +14,65 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-# Funciones de utilidad
+# Configuración de logging
+TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
+LOG_DIR="logs"
+LOG_FILE="$LOG_DIR/installation-$TIMESTAMP.log"
+ERROR_LOG="$LOG_DIR/errors-$TIMESTAMP.log"
+
+# Crear directorio de logs si no existe
+mkdir -p "$LOG_DIR"
+
+# Funciones de logging
+log_message() {
+    local level="$1"
+    local message="$2"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    echo "[$timestamp] [$level] $message" >> "$LOG_FILE"
+}
+
+log_error() {
+    local message="$1"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    echo "[$timestamp] [ERROR] $message" >> "$ERROR_LOG"
+    echo "[$timestamp] [ERROR] $message" >> "$LOG_FILE"
+}
+
+log_success() {
+    log_message "SUCCESS" "$1"
+}
+
+log_info() {
+    log_message "INFO" "$1"
+}
+
+log_warning() {
+    log_message "WARNING" "$1"
+}
+
+# Inicializar logging
+initialize_logging() {
+    local start_time=$(date)
+    echo "=== UNIVERSAL DEVELOPMENT SETUP - LOG DE INSTALACIÓN ===" > "$LOG_FILE"
+    echo "Fecha de inicio: $start_time" >> "$LOG_FILE"
+    echo "Sistema operativo: $(uname -a)" >> "$LOG_FILE"
+    echo "Usuario: $(whoami)" >> "$LOG_FILE"
+    echo "Directorio de trabajo: $(pwd)" >> "$LOG_FILE"
+    echo "Versión del script: 3.0" >> "$LOG_FILE"
+    echo "====================================================" >> "$LOG_FILE"
+    echo "" >> "$LOG_FILE"
+    
+    # Log de errores separado
+    echo "=== LOG DE ERRORES - UNIVERSAL DEVELOPMENT SETUP ===" > "$ERROR_LOG"
+    echo "Fecha de inicio: $start_time" >> "$ERROR_LOG"
+    echo "====================================================" >> "$ERROR_LOG"
+    echo "" >> "$ERROR_LOG"
+    
+    # Guardar tiempo de inicio para calcular duración
+    export start_time
+}
+
+# Funciones de utilidad mejoradas con logging
 show_header() {
     echo -e "${CYAN}"
     echo "╔══════════════════════════════════════════════════════════════╗"
@@ -25,11 +83,26 @@ show_header() {
     echo -e "${NC}"
 }
 
-show_status() { echo -e "${GREEN}✅ $1${NC}"; }
-show_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
-show_error() { echo -e "${RED}❌ $1${NC}"; }
-show_info() { echo -e "${BLUE}ℹ️  $1${NC}"; }
-show_step() { echo -e "${PURPLE}🔧 $1${NC}"; }
+show_status() { 
+    echo -e "${GREEN}✅ $1${NC}"
+    log_success "$1"
+}
+show_warning() { 
+    echo -e "${YELLOW}⚠️  $1${NC}"
+    log_warning "$1"
+}
+show_error() { 
+    echo -e "${RED}❌ $1${NC}"
+    log_error "$1"
+}
+show_info() { 
+    echo -e "${BLUE}ℹ️  $1${NC}"
+    log_info "$1"
+}
+show_step() { 
+    echo -e "${PURPLE}🔧 $1${NC}"
+    log_info "STEP: $1"
+}
 
 # Función para detectar el sistema operativo
 detect_system() {
@@ -285,8 +358,34 @@ check_admin_windows() {
     return 1
 }
 
+# Función para finalizar el logging con estadísticas de tiempo y estado
+finalize_logging() {
+    local end_time=$(date)
+    local duration=$(($(date +%s) - $(date -d "$start_time" +%s) 2>/dev/null || 0))
+    
+    echo "" >> "$LOG_FILE"
+    echo "====================================================" >> "$LOG_FILE"
+    echo "Instalación finalizada: $end_time" >> "$LOG_FILE"
+    if [[ $duration -gt 0 ]]; then
+        echo "Duración total: ${duration}s" >> "$LOG_FILE"
+    fi
+    echo "Estado final: COMPLETADO" >> "$LOG_FILE"
+    echo "====================================================" >> "$LOG_FILE"
+    
+    # Resumen en log de errores si hay errores
+    if [[ -s "$ERROR_LOG" ]]; then
+        echo "" >> "$ERROR_LOG"
+        echo "====================================================" >> "$ERROR_LOG"
+        echo "Instalación completada con errores: $end_time" >> "$ERROR_LOG"
+        echo "====================================================" >> "$ERROR_LOG"
+    fi
+}
+
 # Función principal
 main() {
+    # Inicializar logging
+    initialize_logging
+
     # Verificar si se pasa el argumento --auto para instalación automática
     if [[ "$1" == "--auto" ]] || [[ "$AUTO_INSTALL" == "true" ]]; then
         show_header
@@ -401,10 +500,17 @@ full_installation() {
     echo ""
     echo -e "${GREEN}🎉 ¡Tu entorno de desarrollo está listo!${NC}"
     
+    # Finalizar logging
+    finalize_logging
+    
     # Mostrar información específica de VS Code
     show_vscode_post_install_info
     
     echo -e "${BLUE}ℹ️  Reinicia VS Code para aplicar todas las configuraciones${NC}"
+    echo -e "${CYAN}📋 Los logs se guardaron en: $LOG_FILE${NC}"
+    if [[ -s "$ERROR_LOG" ]]; then
+        echo -e "${YELLOW}⚠️  Errores encontrados guardados en: $ERROR_LOG${NC}"
+    fi
 }
 
 # Función para verificar estado

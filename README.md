@@ -180,12 +180,14 @@ El script aplica configuraciones optimizadas para desarrollo web:
 - **Git**: Integración mejorada
 - **WSL**: Configuraciones específicas
 
-## 🔒 Seguridad
+## 🔒 Seguridad y Logging
 
 - **Backup automático** de configuraciones existentes
 - **Verificación de permisos** antes de escribir
 - **Detección de errores** con manejo apropiado
-- **Logs detallados** de cada operación
+- **📋 Sistema de logging automático** para debugging
+- **📁 Logs detallados** guardados en `logs/` con timestamps
+- **🐛 Captura de errores** en archivos separados para soporte
 
 ## 🌐 Compatibilidad
 
@@ -209,10 +211,10 @@ El script aplica configuraciones optimizadas para desarrollo web:
 
 ## 📚 Documentación
 
-- [Guía de instalación](docs/installation.md)
-- [Solución de problemas](docs/troubleshooting.md)
-- [Configuración avanzada](docs/advanced.md)
-- [Contribuir](docs/contributing.md)
+- **[📋 Sistema de Logging](LOGGING.md)** - Información sobre logs automáticos y debugging
+- **[🪟 Instalación en Windows](WINDOWS.md)** - Guía específica para Windows con PowerShell
+- **[🔧 Configuración de Terminal](TERMINAL-CONFIG.md)** - Setup avanzado de terminales
+- **[🧪 Testing y Validación](TESTING.md)** - Cómo probar y validar la instalación
 
 ## 🤝 Contribuir
 
