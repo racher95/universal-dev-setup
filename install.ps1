@@ -100,7 +100,8 @@ function Start-BashScript {
     $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
     $unixPath = $scriptDir -replace "\\", "/" -replace "C:", "/c"
     
-    & $BashPath -c "cd '$unixPath' && ./install.sh"
+    # Ejecutar instalación completa automáticamente
+    & $BashPath -c "cd '$unixPath' && ./install.sh --auto"
     
     if ($LASTEXITCODE -eq 0) {
         Write-Success "Instalacion completada exitosamente!"
@@ -122,6 +123,7 @@ function Show-Help {
 Clear-Host
 Write-Info "================================================================"
 Write-Info "       UNIVERSAL DEVELOPMENT SETUP - WINDOWS BOOTSTRAP        "
+Write-Info "                    Auto-instalacion de Git Bash              "
 Write-Info "================================================================"
 Write-Host ""
 

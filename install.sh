@@ -287,6 +287,33 @@ check_admin_windows() {
 
 # Función principal
 main() {
+    # Verificar si se pasa el argumento --auto para instalación automática
+    if [[ "$1" == "--auto" ]] || [[ "$AUTO_INSTALL" == "true" ]]; then
+        show_header
+        detect_system
+        setup_paths
+        check_prerequisites
+        show_system_info
+
+        # Cargar módulos específicos
+        source "$(dirname "$0")/scripts/dependencies.sh"
+        source "$(dirname "$0")/scripts/fonts.sh"
+        source "$(dirname "$0")/scripts/vscode.sh"
+        source "$(dirname "$0")/scripts/npm-tools.sh"
+        source "$(dirname "$0")/scripts/git-config.sh"
+
+        # Ejecutar instalación completa automáticamente
+        echo -e "${CYAN}🚀 INICIANDO INSTALACIÓN AUTOMÁTICA COMPLETA...${NC}"
+        echo ""
+        full_installation
+        
+        echo ""
+        echo -e "${GREEN}🎉 ¡Instalación automática completada!${NC}"
+        echo -e "${BLUE}ℹ️  Para más opciones, ejecuta: ./install.sh${NC}"
+        return 0
+    fi
+
+    # Modo interactivo normal
     show_header
     detect_system
     setup_paths
