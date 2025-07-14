@@ -213,7 +213,76 @@ show_system_info() {
         fi
     fi
 
+    # Mostrar información específica de Windows
+    if [[ "$SYSTEM" == "Windows" ]]; then
+        show_windows_info
+    fi
+
     echo ""
+}
+
+# Función para mostrar información del sistema Windows
+show_windows_info() {
+    echo -e "\n${BLUE}=== INFORMACIÓN DEL SISTEMA WINDOWS ===${NC}"
+    
+    # Verificar tipo de entorno Windows
+    if [[ -n "$WSLENV" ]]; then
+        echo -e "🔹 Entorno: ${YELLOW}WSL (Windows Subsystem for Linux)${NC}"
+        echo -e "🔹 Distribución: ${WSL_DISTRO_NAME:-Ubuntu}"
+    elif [[ "$OSTYPE" == "cygwin" ]]; then
+        echo -e "🔹 Entorno: ${YELLOW}Cygwin${NC}"
+    elif [[ "$OSTYPE" == "msys" ]]; then
+        echo -e "🔹 Entorno: ${YELLOW}MSYS2/MinGW${NC}"
+    else
+        echo -e "🔹 Entorno: ${YELLOW}Windows Nativo${NC}"
+    fi
+
+    # Verificar PowerShell
+    if command -v powershell &> /dev/null; then
+        local ps_version=$(powershell -Command '$PSVersionTable.PSVersion.Major' 2>/dev/null)
+        echo -e "🔹 PowerShell: ${GREEN}Disponible v$ps_version${NC}"
+    elif command -v pwsh &> /dev/null; then
+        local ps_version=$(pwsh -Command '$PSVersionTable.PSVersion.Major' 2>/dev/null)
+        echo -e "🔹 PowerShell Core: ${GREEN}Disponible v$ps_version${NC}"
+    else
+        echo -e "🔹 PowerShell: ${RED}No disponible${NC}"
+    fi
+
+    # Verificar gestores de paquetes
+    if command -v choco &> /dev/null; then
+        local choco_version=$(choco --version 2>/dev/null | head -n1)
+        echo -e "🔹 Chocolatey: ${GREEN}Instalado ($choco_version)${NC}"
+    else
+        echo -e "🔹 Chocolatey: ${YELLOW}No instalado (se instalará automáticamente)${NC}"
+    fi
+
+    if command -v winget &> /dev/null; then
+        local winget_version=$(winget --version 2>/dev/null)
+        echo -e "🔹 winget: ${GREEN}Disponible ($winget_version)${NC}"
+    else
+        echo -e "🔹 winget: ${YELLOW}No disponible${NC}"
+    fi
+
+    # Verificar permisos de administrador
+    if check_admin_windows; then
+        echo -e "🔹 Permisos: ${GREEN}Administrador${NC}"
+    else
+        echo -e "🔹 Permisos: ${YELLOW}Usuario estándar${NC}"
+        echo -e "  ${YELLOW}Nota: Algunos componentes requieren permisos de administrador${NC}"
+    fi
+
+    echo ""
+}
+
+# Verificar permisos de administrador en Windows
+check_admin_windows() {
+    # Intentar escribir en directorio del sistema
+    local test_file="/c/Windows/Temp/admin_test_$$"
+    if touch "$test_file" 2>/dev/null; then
+        rm -f "$test_file" 2>/dev/null
+        return 0
+    fi
+    return 1
 }
 
 # Función principal
@@ -271,9 +340,23 @@ show_menu() {
     echo "5. 🔌 Solo extensiones VS Code"
     echo "6. ⚙️  Solo configuración VS Code"
     echo "7. 🛠️  Solo herramientas npm"
-    echo "8. � Configurar Git (usuario/email)"
+    echo "8. 🔧 Configurar Git (usuario/email)"
     echo "9. 📚 Ayuda y documentación"
     echo "10. ❌ Salir"
+    
+    # Mostrar advertencias específicas para Windows
+    if [[ "$SYSTEM" == "Windows" ]]; then
+        echo ""
+        echo -e "${YELLOW}⚠️  NOTA PARA WINDOWS:${NC}"
+        if ! check_admin_windows; then
+            echo -e "   ${YELLOW}• Ejecuta como administrador para instalación completa${NC}"
+            echo -e "   ${YELLOW}• Algunas funciones requieren permisos elevados${NC}"
+        fi
+        if ! command -v choco &> /dev/null && ! command -v winget &> /dev/null; then
+            echo -e "   ${YELLOW}• Chocolatey se instalará automáticamente si es necesario${NC}"
+        fi
+        echo -e "   ${BLUE}• PowerShell es requerido para instalación completa${NC}"
+    fi
     echo ""
 }
 

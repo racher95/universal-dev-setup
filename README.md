@@ -43,6 +43,49 @@ cd universal-dev-setup
 ./install.sh
 ```
 
+## 🪟 Instalación en Windows
+
+### Método 1: Git Bash (Recomendado)
+
+```bash
+# Abrir Git Bash como administrador
+git clone https://github.com/tu-usuario/universal-dev-setup.git
+cd universal-dev-setup
+./install.sh
+```
+
+### Método 2: WSL
+
+```bash
+# Desde WSL (Ubuntu, etc.)
+git clone https://github.com/tu-usuario/universal-dev-setup.git
+cd universal-dev-setup
+./install.sh
+```
+
+### Método 3: PowerShell + Git
+
+```powershell
+# PowerShell como administrador
+git clone https://github.com/tu-usuario/universal-dev-setup.git
+cd universal-dev-setup
+bash install.sh
+```
+
+### ⚠️ Requisitos para Windows:
+
+- **PowerShell** 5.1 o superior
+- **Permisos de administrador** (recomendado)
+- **Git** instalado
+- Conexión a internet
+
+### 🧪 Prueba rápida:
+
+```bash
+# Verificar compatibilidad antes de instalar
+./test-windows.sh
+```
+
 ## 📋 Opciones de instalación
 
 El script ofrece un menú interactivo con las siguientes opciones:

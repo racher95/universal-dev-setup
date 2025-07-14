@@ -139,19 +139,228 @@ install_font_hack() {
 }
 
 install_windows_fonts() {
-    show_warning "Instalación de fuentes en Windows requiere permisos de administrador"
+    show_step "Instalando fuentes en Windows..."
 
-    if command -v choco &> /dev/null; then
-        show_info "Usando Chocolatey para instalar fuentes..."
-        choco install -y firacode jetbrainsmono cascadiacodepl hackfont
+    # Verificar permisos de administrador
+    if ! check_windows_admin; then
+        show_warning "Se requieren permisos de administrador para instalar fuentes"
+        show_info "Algunas fuentes pueden requerir instalación manual"
+    fi
+
+    # Intentar instalación automática con Chocolatey
+    if command -v choco &> /dev/null || install_chocolatey_for_fonts; then
+        install_fonts_with_chocolatey
     else
-        show_info "Instalación manual requerida:"
-        echo "• Fira Code: https://github.com/tonsky/FiraCode/releases"
-        echo "• JetBrains Mono: https://www.jetbrains.com/mono/"
-        echo "• Cascadia Code: https://github.com/microsoft/cascadia-code/releases"
-        echo "• MesloLGS Nerd Font: https://github.com/romkatv/powerlevel10k-media"
+        show_info "Instalación manual de fuentes requerida"
+        provide_manual_font_instructions
+    fi
 
-        show_info "Descarga las fuentes y haz doble clic para instalar"
+    # Verificar instalación de fuentes
+    verify_windows_fonts
+}
+
+# Verificar permisos de administrador para Windows
+check_windows_admin() {
+    # Intentar crear archivo temporal en directorio de fuentes del sistema
+    local test_file="/c/Windows/Fonts/temp_test_$$"
+    if touch "$test_file" 2>/dev/null; then
+        rm -f "$test_file" 2>/dev/null
+        return 0
+    fi
+    return 1
+}
+
+# Instalar Chocolatey específicamente para fuentes
+install_chocolatey_for_fonts() {
+    show_info "Chocolatey no encontrado. Intentando instalación..."
+    
+    if ! command -v powershell &> /dev/null && ! command -v pwsh &> /dev/null; then
+        show_warning "PowerShell no disponible para instalar Chocolatey"
+        return 1
+    fi
+
+    # Script simplificado para fuentes
+    local install_script='
+        try {
+            Set-ExecutionPolicy Bypass -Scope Process -Force
+            [System.Net.ServicePointManager]::SecurityProtocol = 3072
+            iex ((New-Object System.Net.WebClient).DownloadString("https://community.chocolatey.org/install.ps1"))
+            Write-Host "Chocolatey instalado exitosamente"
+        } catch {
+            Write-Host "Error instalando Chocolatey: $_"
+            exit 1
+        }
+    '
+
+    if command -v powershell &> /dev/null; then
+        echo "$install_script" | powershell -Command -
+    elif command -v pwsh &> /dev/null; then
+        echo "$install_script" | pwsh -Command -
+    fi
+
+    # Verificar instalación
+    sleep 2
+    if command -v choco &> /dev/null; then
+        show_status "Chocolatey instalado para gestión de fuentes"
+        return 0
+    else
+        show_warning "No se pudo instalar Chocolatey automáticamente"
+        return 1
+    fi
+}
+
+# Instalar fuentes con Chocolatey
+install_fonts_with_chocolatey() {
+    show_info "Instalando fuentes con Chocolatey..."
+
+    # Lista de fuentes disponibles en Chocolatey
+    local fonts=(
+        "firacode"
+        "jetbrainsmono" 
+        "cascadiacodepl"
+        "hackfont"
+        "sourcecodepro"
+        "inconsolata"
+    )
+
+    local installed=0
+    local failed=0
+
+    # Habilitar confirmación automática para esta sesión
+    choco feature enable -n allowGlobalConfirmation
+
+    for font in "${fonts[@]}"; do
+        show_info "Instalando fuente: $font..."
+        if choco install "$font" -y --no-progress 2>/dev/null; then
+            show_status "$font instalada"
+            ((installed++))
+        else
+            show_warning "Error instalando $font"
+            ((failed++))
+        fi
+    done
+
+    show_info "Fuentes procesadas: $installed instaladas, $failed errores"
+
+    # Si Chocolatey falla, intentar método manual
+    if [[ $installed -eq 0 ]]; then
+        show_warning "Chocolatey no pudo instalar fuentes. Usando método manual..."
+        provide_manual_font_instructions
+    fi
+}
+
+# Proporcionar instrucciones de instalación manual
+provide_manual_font_instructions() {
+    show_info "=== INSTALACIÓN MANUAL DE FUENTES ==="
+    echo ""
+    echo "Descarga e instala estas fuentes manualmente:"
+    echo ""
+    echo "1. Fira Code (Recomendada):"
+    echo "   https://github.com/tonsky/FiraCode/releases"
+    echo "   - Descarga FiraCode.zip"
+    echo "   - Extrae y selecciona todos los archivos .ttf"
+    echo "   - Clic derecho → Instalar"
+    echo ""
+    echo "2. JetBrains Mono:"
+    echo "   https://www.jetbrains.com/mono/"
+    echo "   - Descarga la fuente"
+    echo "   - Instala todos los archivos .ttf"
+    echo ""
+    echo "3. Cascadia Code (Microsoft):"
+    echo "   https://github.com/microsoft/cascadia-code/releases"
+    echo "   - Incluida en Windows 11"
+    echo "   - Para Windows 10, descargar manualmente"
+    echo ""
+    echo "4. MesloLGS Nerd Font (Para terminal):"
+    echo "   https://github.com/romkatv/powerlevel10k-media"
+    echo "   - Descarga los 4 archivos .ttf"
+    echo "   - Instala todos"
+    echo ""
+    echo "💡 Tip: Después de instalar, reinicia VS Code para aplicar las fuentes"
+}
+
+# Verificar fuentes instaladas en Windows
+verify_windows_fonts() {
+    show_step "Verificando fuentes instaladas..."
+
+    # Lista de fuentes a verificar
+    local fonts_to_check=(
+        "Fira Code"
+        "JetBrains Mono"
+        "Cascadia Code"
+        "Cascadia Mono"
+        "MesloLGS NF"
+        "Source Code Pro"
+        "Inconsolata"
+    )
+
+    local found=0
+    local total=${#fonts_to_check[@]}
+
+    # Verificar usando PowerShell si está disponible
+    if command -v powershell &> /dev/null; then
+        show_info "Verificando fuentes con PowerShell..."
+        
+        for font in "${fonts_to_check[@]}"; do
+            local ps_script="
+                \$fonts = [System.Drawing.Text.InstalledFontCollection]::new().Families.Name
+                if (\$fonts -contains '$font') { 
+                    Write-Host 'FOUND'
+                } else { 
+                    Write-Host 'NOT_FOUND'
+                }
+            "
+            
+            local result=$(echo "$ps_script" | powershell -Command -)
+            if [[ "$result" == *"FOUND"* ]]; then
+                show_status "$font: ✓ Instalada"
+                ((found++))
+            else
+                show_info "$font: ✗ No encontrada"
+            fi
+        done
+    else
+        # Verificación alternativa por archivos
+        show_info "Verificando fuentes por archivos del sistema..."
+        
+        local font_dirs=(
+            "/c/Windows/Fonts"
+            "/c/Users/$USER/AppData/Local/Microsoft/Windows/Fonts"
+        )
+        
+        for font in "${fonts_to_check[@]}"; do
+            local found_font=false
+            for dir in "${font_dirs[@]}"; do
+                if [[ -d "$dir" ]]; then
+                    # Buscar archivos de fuente relacionados
+                    local font_files=$(find "$dir" -iname "*${font// /}*" -o -iname "*${font//' '/'-'}*" 2>/dev/null | wc -l)
+                    if [[ $font_files -gt 0 ]]; then
+                        show_status "$font: ✓ Encontrada ($font_files archivos)"
+                        ((found++))
+                        found_font=true
+                        break
+                    fi
+                fi
+            done
+            
+            if [[ "$found_font" == false ]]; then
+                show_info "$font: ✗ No encontrada"
+            fi
+        done
+    fi
+
+    show_info "Fuentes verificadas: $found/$total encontradas"
+    
+    if [[ $found -eq 0 ]]; then
+        show_warning "No se encontraron fuentes de programación"
+        show_info "Ejecuta la instalación manual siguiendo las instrucciones anteriores"
+        return 1
+    elif [[ $found -lt $((total / 2)) ]]; then
+        show_warning "Pocas fuentes encontradas. Considera instalar más"
+        return 1
+    else
+        show_status "Suficientes fuentes de programación disponibles"
+        return 0
     fi
 }
 
@@ -193,7 +402,7 @@ check_fonts() {
             done
             ;;
         "Windows")
-            show_info "Verificación de fuentes en Windows requiere PowerShell"
+            verify_windows_fonts
             ;;
     esac
 }
