@@ -361,7 +361,9 @@ check_admin_windows() {
 # Función para finalizar el logging con estadísticas de tiempo y estado
 finalize_logging() {
     local end_time=$(date)
-    local duration=$(($(date +%s) - $(date -d "$start_time" +%s) 2>/dev/null || 0))
+    local start_timestamp=$(date -d "$start_time" +%s 2>/dev/null || echo 0)
+    local current_timestamp=$(date +%s)
+    local duration=$((current_timestamp - start_timestamp))
 
     echo "" >> "$LOG_FILE"
     echo "====================================================" >> "$LOG_FILE"
