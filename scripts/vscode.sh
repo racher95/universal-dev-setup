@@ -27,6 +27,62 @@ detect_vscode_macos_issues() {
     return 1
 }
 
+# Funciones robustas para manejar crashes de VS Code en macOS
+code_list_extensions_safe() {
+    local max_attempts=3
+    local attempt=1
+
+    while [[ $attempt -le $max_attempts ]]; do
+        if timeout 30 code --list-extensions 2>/dev/null; then
+            return 0
+        else
+            show_warning "⚠️ VS Code crash detectado (intento $attempt/$max_attempts)"
+            ((attempt++))
+            [[ $attempt -le $max_attempts ]] && sleep 2
+        fi
+    done
+
+    show_error "❌ VS Code presenta crashes persistentes en macOS"
+    show_info "💡 Esto es un problema conocido de Electron Framework"
+    return 1
+}
+
+code_install_extension_safe() {
+    local ext="$1"
+    local max_attempts=3
+    local attempt=1
+
+    while [[ $attempt -le $max_attempts ]]; do
+        show_info "📦 Instalando $ext (intento $attempt/$max_attempts)..."
+
+        if timeout 60 code --install-extension "$ext" --force 2>/dev/null; then
+            show_success "✅ $ext instalado correctamente"
+            return 0
+        else
+            show_warning "⚠️ Crash o error instalando $ext"
+            ((attempt++))
+            [[ $attempt -le $max_attempts ]] && show_info "⏳ Esperando 3 segundos..." && sleep 3
+        fi
+    done
+
+    show_error "❌ No se pudo instalar $ext después de $max_attempts intentos"
+    return 1
+}
+
+extension_already_installed() {
+    local ext="$1"
+    local extensions_list
+
+    # Intentar obtener lista de extensiones de forma segura
+    extensions_list=$(code_list_extensions_safe)
+    if [[ $? -eq 0 ]]; then
+        echo "$extensions_list" | grep -q "^$ext$"
+    else
+        # Si no se puede obtener la lista, asumir que no está instalada
+        return 1
+    fi
+}
+
 # Instalación manual de extensiones para macOS problemático
 install_extensions_manual_mode() {
     show_step "🌍 Configuración Manual de Extensiones para macOS"
@@ -131,25 +187,60 @@ install_vscode_extensions() {
 
     # Detectar si estamos en macOS con problemas
     if detect_vscode_macos_issues; then
-        # Intentar instalar solo Spanish Language Pack
-        show_info "🌍 Intentando instalar Spanish Language Pack..."
-        
-        if timeout 30 code --install-extension "ms-ceintl.vscode-language-pack-es" --force 2>/dev/null; then
-            show_success "✅ Spanish Language Pack instalado correctamente"
-            
-            # Configurar idioma
-            local locale_file="$VSCODE_SETTINGS_DIR/locale.json"
-            mkdir -p "$VSCODE_SETTINGS_DIR"
-            echo '{"locale":"es"}' > "$locale_file"
-            show_success "✅ Configuración de idioma creada"
-            
-            show_info "💡 Reinicia VS Code para ver la interfaz en español"
-            show_info "🔌 Para las demás extensiones, usa el modo manual..."
-            
-            # Mostrar instrucciones para el resto
-            install_extensions_manual_mode
+        # Usar sistema anti-crash para macOS
+        local installed=0
+        local failed=0
+
+        # PASO 1: Instalar Spanish Language Pack PRIMERO (crítico)
+        local spanish_ext="ms-ceintl.vscode-language-pack-es"
+        show_info "🌍 PRIORIDAD: Instalando Spanish Language Pack..."
+
+        if ! extension_already_installed "$spanish_ext"; then
+            if code_install_extension_safe "$spanish_ext"; then
+                ((installed++))
+                show_success "✅ Spanish Language Pack instalado con sistema anti-crash"
+                
+                # Configurar idioma inmediatamente
+                local locale_file="$VSCODE_SETTINGS_DIR/locale.json"
+                mkdir -p "$VSCODE_SETTINGS_DIR"
+                echo '{"locale":"es"}' > "$locale_file"
+                show_success "✅ Configuración de idioma creada"
+            else
+                show_warning "⚠️ Spanish Language Pack falló con sistema anti-crash"
+                ((failed++))
+            fi
         else
-            show_warning "⚠️ Spanish Language Pack falló, pasando a modo manual completo"
+            show_info "✅ Spanish Language Pack ya está instalado"
+        fi
+
+        # PASO 2: Intentar instalar extensiones esenciales con anti-crash
+        local essential_extensions=(
+            "esbenp.prettier-vscode"
+            "dbaeumer.vscode-eslint"
+            "ritwickdey.liveserver"
+            "eamodio.gitlens"
+            "pkief.material-icon-theme"
+        )
+
+        show_info "� Instalando extensiones esenciales con sistema anti-crash..."
+        for ext in "${essential_extensions[@]}"; do
+            if ! extension_already_installed "$ext"; then
+                if code_install_extension_safe "$ext"; then
+                    ((installed++))
+                else
+                    show_warning "❌ $ext falló con anti-crash"
+                    ((failed++))
+                fi
+            else
+                show_info "✅ $ext ya está instalada"
+            fi
+        done
+
+        show_status "📊 Resultado macOS: $installed instaladas, $failed errores"
+        
+        # Si hay muchos errores, mostrar modo manual
+        if [[ $failed -gt 2 ]]; then
+            show_warning "⚠️ Múltiples errores detectados, mostrando modo manual..."
             install_extensions_manual_mode
         fi
         
@@ -160,17 +251,16 @@ install_vscode_extensions() {
     local installed=0
     local failed=0
 
+    show_info "🐧 Sistema no-macOS: Instalación normal de extensiones"
     for ext in "${extensions[@]}"; do
-        if ! code --list-extensions | grep -q "^$ext$"; then
-            show_info "Instalando $ext..."
-            if code --install-extension "$ext" --force; then
+        if ! extension_already_installed "$ext"; then
+            if code_install_extension_safe "$ext"; then
                 ((installed++))
             else
-                show_warning "Error instalando $ext"
                 ((failed++))
             fi
         else
-            show_info "$ext ya está instalada"
+            show_info "✅ $ext ya está instalada"
         fi
     done
 
@@ -183,13 +273,47 @@ install_vscode_extensions() {
 configure_spanish_language() {
     show_step "Configurando idioma español en VS Code..."
     
-    # Crear archivo locale.json para forzar el idioma
-    local locale_file="$VSCODE_SETTINGS_DIR/locale.json"
-    mkdir -p "$VSCODE_SETTINGS_DIR"
-    echo '{"locale":"es"}' > "$locale_file"
-    show_success "Configuración de locale creada: locale.json"
-    
-    show_info "💡 Reinicia VS Code para ver la interfaz en español"
+    # Verificar si la extensión de idioma español está instalada
+    if code --list-extensions 2>/dev/null | grep -q "ms-ceintl.vscode-language-pack-es"; then
+        show_success "✅ Extensión de idioma español encontrada"
+        
+        # Crear archivo locale.json para forzar el idioma
+        local locale_file="$VSCODE_SETTINGS_DIR/locale.json"
+        mkdir -p "$VSCODE_SETTINGS_DIR"
+        echo '{"locale":"es"}' > "$locale_file"
+        show_success "Configuración de locale creada: locale.json"
+        
+        show_info "💡 Reinicia VS Code para ver la interfaz en español"
+    else
+        show_warning "⚠️ Extensión de idioma español no encontrada"
+        show_info "🔄 Intentando instalación con mayor prioridad..."
+        
+        # Intentar instalación específica para idioma
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # En macOS usar sistema anti-crash
+            code_install_extension_safe "ms-ceintl.vscode-language-pack-es"
+        else
+            # En otros sistemas instalación normal
+            timeout 60 code --install-extension ms-ceintl.vscode-language-pack-es --force
+        fi
+        
+        if [[ $? -eq 0 ]]; then
+            # Configurar después de instalación exitosa
+            local locale_file="$VSCODE_SETTINGS_DIR/locale.json"
+            mkdir -p "$VSCODE_SETTINGS_DIR"
+            echo '{"locale":"es"}' > "$locale_file"
+            show_success "✅ Spanish Language Pack instalado y configurado"
+            show_info "💡 Reinicia VS Code para ver los cambios"
+        else
+            show_error "❌ No se pudo instalar Spanish Language Pack"
+            show_info "📋 Instalación manual requerida:"
+            show_info "   1. Abre VS Code"
+            show_info "   2. Ctrl+Shift+P → 'Extensions: Install Extensions'"
+            show_info "   3. Busca: 'Spanish Language Pack'"
+            show_info "   4. Instala: 'Spanish Language Pack for Visual Studio Code'"
+            show_info "   5. Reinicia VS Code"
+        fi
+    fi
 }
 
 configure_vscode_settings() {
