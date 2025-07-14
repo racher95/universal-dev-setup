@@ -229,6 +229,7 @@ El script aplica configuraciones optimizadas para desarrollo web:
 
 - **[📋 Sistema de Logging](LOGGING.md)** - Información sobre logs automáticos y debugging
 - **[🪟 Instalación en Windows](WINDOWS.md)** - Guía específica para Windows con PowerShell
+- **[🍎 Sistema Anti-Crash macOS](MACOS-ANTICRASH.md)** - Solución para problemas de extensiones en macOS
 - **[🔧 Configuración de Terminal](TERMINAL-CONFIG.md)** - Setup avanzado de terminales
 - **[🧪 Testing y Validación](TESTING.md)** - Cómo probar y validar la instalación
 - **[🛠️ Scripts de Diagnóstico](SCRIPTS.md)** - Guía completa de scripts de diagnóstico y pruebas
