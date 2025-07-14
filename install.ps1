@@ -52,17 +52,27 @@ function Install-GitBash {
     # Intentar con Chocolatey
     if (Get-Command choco -ErrorAction SilentlyContinue) {
         Write-Info "Usando Chocolatey para instalar Git..."
-        choco install git -y
-        Start-Sleep -Seconds 3
-        return Find-GitBash
+        try {
+            choco install git -y
+            Start-Sleep -Seconds 3
+            return Find-GitBash
+        }
+        catch {
+            Write-Warning "Error con Chocolatey, intentando winget..."
+        }
     }
     
     # Intentar con winget
     if (Get-Command winget -ErrorAction SilentlyContinue) {
         Write-Info "Usando winget para instalar Git..."
-        winget install Git.Git --silent
-        Start-Sleep -Seconds 3
-        return Find-GitBash
+        try {
+            winget install Git.Git --silent
+            Start-Sleep -Seconds 3
+            return Find-GitBash
+        }
+        catch {
+            Write-Warning "Error con winget, instalando Chocolatey..."
+        }
     }
     
     # Instalar Chocolatey primero
@@ -99,7 +109,16 @@ function Start-BashScript {
     }
 }
 
-# Funcion principal
+function Show-Help {
+    Write-Info "USO:"
+    Write-Info "  .\install.ps1        Instalacion automatica completa"
+    Write-Info "  .\install.ps1 -Force Forzar instalacion"
+    Write-Info "  .\install.ps1 -Help  Mostrar esta ayuda"
+    Write-Host ""
+    Write-Info "Este script instala Git Bash automaticamente y ejecuta el setup completo."
+}
+
+# === INICIO DEL SCRIPT PRINCIPAL ===
 Clear-Host
 Write-Info "================================================================"
 Write-Info "       UNIVERSAL DEVELOPMENT SETUP - WINDOWS BOOTSTRAP        "
@@ -107,12 +126,7 @@ Write-Info "================================================================"
 Write-Host ""
 
 if ($Help) {
-    Write-Info "USO:"
-    Write-Info "  .\install.ps1        Instalacion automatica completa"
-    Write-Info "  .\install.ps1 -Force Forzar instalacion"
-    Write-Info "  .\install.ps1 -Help  Mostrar esta ayuda"
-    Write-Host ""
-    Write-Info "Este script instala Git Bash automaticamente y ejecuta el setup completo."
+    Show-Help
     Read-Host "Presiona Enter para salir"
     exit
 }
