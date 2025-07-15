@@ -205,12 +205,30 @@ install_fonts() {
 
     case "$SYSTEM" in
         "macOS")
-            # Instalar fuentes con Homebrew
+            # Instalar fuentes con Homebrew (sin tap deprecado)
             show_info "Instalando fuentes con Homebrew..."
-            brew tap homebrew/cask-fonts
-            brew install --cask font-meslo-lg-nerd-font
-            brew install --cask font-fira-code-nerd-font
-            brew install --cask font-jetbrains-mono-nerd-font
+
+            # Asegurarse de que el tap obsoleto no esté presente, para evitar errores
+            if brew tap | grep -q "homebrew/cask-fonts"; then
+                show_info "Desvinculando tap obsoleto 'homebrew/cask-fonts'..."
+                brew untap homebrew/cask-fonts
+            fi
+            
+            # Las fuentes Nerd Font ahora están disponibles directamente
+            local fonts=(
+                "font-meslo-lg-nerd-font"
+                "font-fira-code-nerd-font"
+                "font-jetbrains-mono-nerd-font"
+            )
+            
+            for font in "${fonts[@]}"; do
+                if ! brew list --cask "$font" &> /dev/null; then
+                    show_info "Instalando $font..."
+                    brew install --cask "$font" || show_warning "Error instalando $font"
+                else
+                    show_info "$font ya está instalada"
+                fi
+            done
 
             # Advertencia específica para Terminal.app
             if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]]; then
