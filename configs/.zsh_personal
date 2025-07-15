@@ -1,0 +1,69 @@
+# ==============================================================================
+# ALIAS Y FUNCIONES PERSONALES
+# ==============================================================================
+
+# --- Utilidades del Sistema ---
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias ll='ls -la'
+alias reload='source ~/.zshrc'
+# -i pide confirmación antes de borrar, es más seguro
+alias rm='rm -i'
+# mkdir -p crea directorios padres si no existen
+alias md='mkdir -p'
+# Muestra el uso de disco de forma legible
+alias df='df -h'
+# Muestra la IP pública
+alias myip='curl ifconfig.me'
+
+
+# --- Herramientas (con dependencias) ---
+alias find='fd'
+alias ls='exa --icons'
+
+# --- Git ---
+alias gs='git status'
+alias gc='git commit -m'
+alias gp='git push'
+alias ga='git add .'
+alias gl='git log --oneline --graph --decorate'
+alias gb='git branch'
+alias gco='git checkout'
+
+# --- OneDrive ---
+# Para forzar una sincronización manual
+alias ods='onedrive --sync'
+
+# --- Node.js / Desarrollo Web ---
+alias nvmreload='export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh"'
+alias serve='npx serve'
+alias dev='npm run dev'
+alias updaten='ncu -u && npm install'
+
+# Alias para ejecutar ARGOS fácilmente
+alias argos="$HOME/.local/bin/argos-fetch"
+alias argos-fetch="$HOME/.local/bin/argos-fetch"
+
+# --- Scripts de Configuración Universal ---
+alias setup-dev='bash /tmp/universal_dev_setup.sh'
+alias check-dev='code --list-extensions && echo "Fuentes:" && fc-list | grep -i "fira\|jetbrains\|cascadia\|meslo"'
+
+# --- Colaboración y Productividad ---
+alias liveshare='code --install-extension ms-vsliveshare.vsliveshare && echo "Live Share listo para colaborar! 🤝"'
+
+# --- Funciones y Alias Dependientes del Sistema Operativo ---
+if [[ "$(uname)" == "Darwin" ]]; then # macOS
+    # Comandos de actualización para macOS usando Homebrew
+    alias update='brew update && brew upgrade'
+    clean-system() {
+        brew cleanup
+    }
+elif [[ "$(uname)" == "Linux" ]]; then # Linux
+    # Comandos de actualización para sistemas basados en Debian/Ubuntu
+    # (Este es el alias que ya tenías y funciona perfecto)
+    alias update='sudo apt update && sudo apt upgrade -y'
+    clean-system() {
+        sudo apt autoremove -y && sudo apt autoclean -y && sudo apt clean -y
+    }
+fi

@@ -1,0 +1,150 @@
+#!/bin/bash
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🐺 ARGOS FETCH - Sistema de bienvenida visual para terminal
+# ═══════════════════════════════════════════════════════════════════════════════
+# Script épico minimalista: Imagen del lobo + ARGOS ASCII
+# Diseño limpio y elegante con rutas portables
+#
+# Dependencias: chafa (para renderizar imágenes en terminal)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Configuración de rutas portables
+ARGOS_IMAGE_PATH="$HOME/.local/share/argos/Argos-FetchWU.png"
+ARGOS_IMAGE_FALLBACK="$HOME/.config/argos/Argos-FetchWU.png"
+
+# Verificar dependencias y capacidades del terminal
+check_image_support() {
+    # Verificar si estamos en iTerm2
+    if [[ "$TERM_PROGRAM" == "iTerm.app" ]]; then
+        return 0  # iTerm2 tiene soporte nativo
+    fi
+
+    # Para otros terminales, necesitamos chafa
+    if ! command -v chafa &> /dev/null; then
+        echo "⚠️  ARGOS requiere 'chafa' para funcionar en este terminal"
+        echo "   Instalar con: sudo apt install chafa  (Ubuntu/Debian)"
+        echo "   Instalar con: brew install chafa      (macOS)"
+        return 1
+    fi
+
+    return 0
+}
+
+# Función para mostrar imagen según el terminal
+display_image() {
+    local image_path="$1"
+    local width="${2:-30}"
+    local height="${3:-18}"
+
+    if [[ "$TERM_PROGRAM" == "iTerm.app" ]]; then
+        # Usar protocolo nativo de iTerm2
+        echo -e "\033]1337;File=inline=1:$(base64 < "$image_path")\a"
+    else
+        # Usar chafa para otros terminales
+        chafa --symbols=block --size="${width}x${height}" "$image_path"
+    fi
+}
+
+# Verificar que la imagen exista
+ARGOS_IMAGE=""
+if [[ -f "$ARGOS_IMAGE_PATH" ]]; then
+    ARGOS_IMAGE="$ARGOS_IMAGE_PATH"
+elif [[ -f "$ARGOS_IMAGE_FALLBACK" ]]; then
+    ARGOS_IMAGE="$ARGOS_IMAGE_FALLBACK"
+else
+    echo "⚠️  Imagen ARGOS no encontrada en:"
+    echo "   $ARGOS_IMAGE_PATH"
+    echo "   $ARGOS_IMAGE_FALLBACK"
+    return 1
+fi
+
+# Verificar soporte de imágenes
+if ! check_image_support; then
+    return 1
+fi
+
+# Limpiar pantalla completamente
+clear
+sleep 0.1
+clear
+
+# Crear arrays para la imagen y el texto ASCII
+declare -a wolf_lines
+declare -a argos_lines
+
+# Capturar la imagen del lobo (método adaptativo)
+if [[ "$TERM_PROGRAM" == "iTerm.app" ]]; then
+    # Para iTerm2, crear líneas vacías para el espacio de la imagen
+    for ((i=1; i<=18; i++)); do
+        wolf_lines+=("")
+    done
+    # Mostrar imagen nativa de iTerm2
+    display_image "$ARGOS_IMAGE"
+else
+    # Para otros terminales, usar chafa
+    mapfile -t wolf_lines < <(display_image "$ARGOS_IMAGE" 30 18)
+fi
+
+# ASCII art de ARGOS (más compacto)
+argos_lines=(
+"    ██████╗ ██████╗  ██████╗  ██████╗ ███████╗"
+"   ██╔══██╗██╔══██╗██╔════╝ ██╔═══██╗██╔════╝"
+"   ███████║██████╔╝██║  ███╗██║   ██║███████╗"
+"   ██╔══██║██╔══██╗██║   ██║██║   ██║╚════██║"
+"   ██║  ██║██║  ██║╚██████╔╝╚██████╔╝███████║"
+"   ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚══════╝"
+"                                               "
+"        🐺 W O L F   S Y S T E M 🐺        "
+)
+
+# Obtener información del sistema
+USERNAME=$(whoami)
+HOSTNAME=$(hostname)
+OS=$(uname -s)
+KERNEL=$(uname -r)
+UPTIME=$(uptime -p 2>/dev/null || echo "N/A")
+
+# Información adicional para mostrar
+info_lines=(
+"                                               "
+"   👤 Usuario: $USERNAME@$HOSTNAME"
+"   🖥️  Sistema: $OS"
+"   🔧 Kernel: $KERNEL"
+"   ⏱️  Uptime: $UPTIME"
+"   📂 Directorio: $(pwd)"
+)
+
+# Combinar ASCII art con información del sistema
+combined_lines=("${argos_lines[@]}" "${info_lines[@]}")
+
+# Mostrar la imagen del lobo al lado del texto ARGOS (centrado verticalmente)
+echo ""
+echo ""
+
+# Calcular líneas para centrar el texto
+wolf_lines_count=${#wolf_lines[@]}
+combined_lines_count=${#combined_lines[@]}
+
+# Calcular el offset para centrar ARGOS verticalmente
+offset=$(( (wolf_lines_count - combined_lines_count) / 2 ))
+
+# Mostrar las líneas combinadas
+for ((i=0; i<wolf_lines_count; i++)); do
+    wolf_line="${wolf_lines[$i]:-}"
+
+    # Calcular el índice del texto ARGOS considerando el offset
+    combined_index=$(( i - offset ))
+
+    if [ $combined_index -ge 0 ] && [ $combined_index -lt $combined_lines_count ]; then
+        combined_line="${combined_lines[$combined_index]}"
+    else
+        combined_line=""
+    fi
+
+    # Mostrar línea combinada
+    printf "%-35s  %s\n" "$wolf_line" "$combined_line"
+done
+
+echo ""
+echo ""
