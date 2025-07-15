@@ -1,0 +1,41 @@
+[user]
+    name = Terminal User
+    email = user@example.com
+
+[core]
+    editor = nano
+    autocrlf = input
+    quotepath = false
+
+[init]
+    defaultBranch = main
+
+[pull]
+    rebase = true
+
+[push]
+    default = simple
+
+[alias]
+    st = status
+    co = checkout
+    br = branch
+    ci = commit
+    ca = commit -a
+    ps = push
+    pl = pull
+    lg = log --oneline --graph --decorate --all
+    last = log -1 HEAD
+    unstage = reset HEAD --
+
+[color]
+    ui = auto
+    branch = auto
+    diff = auto
+    status = auto
+
+[diff]
+    tool = vimdiff
+
+[merge]
+    tool = vimdiff
