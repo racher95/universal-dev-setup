@@ -21,6 +21,7 @@ setup_vscode_directories() {
         # WSL
         export VSCODE_SETTINGS_DIR="$HOME/.vscode-server/data/Machine"
         export SYSTEM="WSL"
+        export WSL_DETECTED_DISTRO_NAME="$WSL_DISTRO_NAME"
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
         # Linux nativo
         export VSCODE_SETTINGS_DIR="$HOME/.config/Code/User"
@@ -266,6 +267,7 @@ get_system_extensions() {
         "pkief.material-icon-theme"
         "zhuangtongfa.material-theme"
         "dracula-theme.theme-dracula"
+        "zhuangtongfa.material-theme"
 
         # Desarrollo web
         "ritwickdey.liveserver"
@@ -656,16 +658,17 @@ EOF
 }
 
 add_wsl_settings() {
-    local wsl_config=$(cat << 'EOF'
+    local distro_name="${WSL_DETECTED_DISTRO_NAME:-Ubuntu}"
+    local wsl_config=$(cat << EOF
   ,
   // === WSL SPECIFIC SETTINGS ===
   "remote.WSL.fileWatcher.polling": true,
   "remote.WSL.useShellEnvironment": true,
-  "terminal.integrated.defaultProfile.windows": "Ubuntu (WSL)",
+  "terminal.integrated.defaultProfile.windows": "${distro_name} (WSL)",
   "terminal.integrated.profiles.windows": {
-    "Ubuntu (WSL)": {
-      "path": "C:\\Windows\\System32\\wsl.exe",
-      "args": ["-d", "Ubuntu"],
+    "${distro_name} (WSL)": {
+      "path": "C:\\\\Windows\\\\System32\\\\wsl.exe",
+      "args": ["-d", "${distro_name}"],
       "icon": "terminal-ubuntu"
     }
   },
@@ -713,8 +716,7 @@ add_windows_settings() {
   "terminal.integrated.defaultProfile.windows": "Git Bash",
   "terminal.integrated.profiles.windows": {
     "Git Bash": {
-      "path": "C:\\Program Files\\Git\\bin\\bash.exe",
-      "args": ["--login", "-i"]
+      "source": "Git Bash"
     }
   }
 }

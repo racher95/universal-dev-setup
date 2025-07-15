@@ -33,9 +33,3 @@
     branch = auto
     diff = auto
     status = auto
-
-[diff]
-    tool = vimdiff
-
-[merge]
-    tool = vimdiff
