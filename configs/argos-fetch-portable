@@ -10,8 +10,8 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # Configuración de rutas portables
-ARGOS_IMAGE_PATH="$HOME/.local/share/argos/Argos-FetchWU.png"
-ARGOS_IMAGE_FALLBACK="$HOME/.config/argos/Argos-FetchWU.png"
+ARGOS_IMAGE_PATH="$HOME/.local/share/argos/argos-image.png"
+ARGOS_IMAGE_FALLBACK="$HOME/.config/argos/argos-image.png"
 
 # Verificar dependencias y capacidades del terminal
 check_image_support() {

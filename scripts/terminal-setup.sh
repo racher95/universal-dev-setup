@@ -126,8 +126,13 @@ check_config_files() {
         missing_files+=("argos-fetch-portable")
     fi
 
+    # Verificar imágenes ARGOS según el sistema
     if [[ ! -f "$CONFIG_DIR/Argos-FetchWU.png" ]]; then
         missing_files+=("Argos-FetchWU.png")
+    fi
+
+    if [[ ! -f "$CONFIG_DIR/loboMacOS.png" ]]; then
+        missing_files+=("loboMacOS.png")
     fi
 
     # Verificar archivo de configuración adicional
@@ -582,14 +587,36 @@ install_argos_system() {
         return 1
     fi
 
-    # Copiar imagen ARGOS
-    show_info "Instalando imagen ARGOS..."
-    if [[ -f "$CONFIG_DIR/Argos-FetchWU.png" ]]; then
-        cp "$CONFIG_DIR/Argos-FetchWU.png" "$HOME/.local/share/argos/Argos-FetchWU.png"
-        # Crear fallback en .config también
-        cp "$CONFIG_DIR/Argos-FetchWU.png" "$HOME/.config/argos/Argos-FetchWU.png"
+    # Copiar imagen ARGOS específica según sistema
+    show_info "Instalando imagen ARGOS específica para $SYSTEM..."
+
+    # Determinar qué imagen usar según el sistema
+    local image_source=""
+    local image_name=""
+
+    if [[ "$SYSTEM" == "macOS" ]]; then
+        image_source="$CONFIG_DIR/loboMacOS.png"
+        image_name="loboMacOS.png"
+        show_info "🍎 Usando imagen específica para macOS: loboMacOS.png"
     else
-        show_error "Imagen Argos-FetchWU.png no encontrada en $CONFIG_DIR"
+        image_source="$CONFIG_DIR/Argos-FetchWU.png"
+        image_name="Argos-FetchWU.png"
+        show_info "🐧 Usando imagen para WSL/Linux: Argos-FetchWU.png"
+    fi
+
+    # Verificar que la imagen existe
+    if [[ -f "$image_source" ]]; then
+        # Copiar con nombre genérico para el script
+        cp "$image_source" "$HOME/.local/share/argos/argos-image.png"
+        cp "$image_source" "$HOME/.config/argos/argos-image.png"
+
+        # Mantener también la imagen con su nombre original por compatibilidad
+        cp "$image_source" "$HOME/.local/share/argos/$image_name"
+        cp "$image_source" "$HOME/.config/argos/$image_name"
+
+        show_success "✅ Imagen $image_name instalada correctamente"
+    else
+        show_error "❌ Imagen $image_name no encontrada en $CONFIG_DIR"
         return 1
     fi
 
