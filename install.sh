@@ -540,13 +540,58 @@ show_menu() {
     echo ""
 }
 
+# Función para preguntar sobre configuración de terminal
+ask_terminal_configuration() {
+    echo ""
+    echo -e "${CYAN}🖥️  CONFIGURACIÓN DE TERMINAL${NC}"
+    echo "═══════════════════════════════════════════════════════════════"
+    echo -e "${BLUE}¿Deseas configurar el terminal con Zsh + Oh My Zsh + Powerlevel10k?${NC}"
+    echo ""
+    echo -e "${YELLOW}Esto incluye:${NC}"
+    echo "• Zsh como shell por defecto"
+    echo "• Oh My Zsh con plugins esenciales"
+    echo "• Tema Powerlevel10k personalizado"
+    echo "• Fuentes Nerd Font para iconos"
+    echo ""
+
+    while true; do
+        read -p "¿Configurar terminal? (s/n): " terminal_choice
+        case $terminal_choice in
+            [Ss]|[Yy]|[Ss][Ii]|[Yy][Ee][Ss])
+                echo ""
+                echo -e "${CYAN}🚀 Iniciando configuración del terminal...${NC}"
+                echo ""
+                # Ejecutar directamente el script de terminal
+                if bash "$(dirname "$0")/scripts/terminal-setup.sh"; then
+                    echo ""
+                    echo -e "${GREEN}✅ ¡Terminal configurado exitosamente!${NC}"
+                    echo -e "${BLUE}ℹ️  Reinicia tu terminal para aplicar todos los cambios${NC}"
+                else
+                    echo ""
+                    echo -e "${YELLOW}⚠️  Hubo algunos problemas con la configuración del terminal${NC}"
+                    echo -e "${BLUE}ℹ️  Puedes ejecutar manualmente: ./scripts/terminal-setup.sh${NC}"
+                fi
+                break
+                ;;
+            [Nn]|[Nn][Oo])
+                echo ""
+                echo -e "${BLUE}ℹ️  Configuración de terminal omitida${NC}"
+                echo -e "${CYAN}💡 Puedes configurarlo más tarde ejecutando: ./install.sh (opción 5)${NC}"
+                break
+                ;;
+            *)
+                echo -e "${RED}❌ Respuesta inválida. Por favor responde 's' o 'n'${NC}"
+                ;;
+        esac
+    done
+}
+
 # Función para instalación completa
 full_installation() {
     show_step "Iniciando instalación completa..."
 
     install_base_dependencies
     install_fonts
-    configure_terminal
     install_vscode_extensions
     configure_vscode_settings
     install_npm_tools
@@ -566,6 +611,9 @@ full_installation() {
     if [[ -s "$ERROR_LOG" ]]; then
         echo -e "${YELLOW}⚠️  Errores encontrados guardados en: $ERROR_LOG${NC}"
     fi
+
+    # Preguntar sobre configuración del terminal
+    ask_terminal_configuration
 }
 
 # Función para verificar estado
