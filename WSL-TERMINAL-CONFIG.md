@@ -30,27 +30,30 @@ El script `install.sh` detecta automáticamente cuando se ejecuta desde WSL y co
 ### 2. Detección de Sistema
 
 El script detecta WSL mediante:
+
 - Variable de entorno `$WSL_DISTRO_NAME`
 - Tipo de sistema `$OSTYPE == "linux-gnu"`
 - Configuración específica para directorio `.vscode-server`
 
 ### 3. Configuraciones Específicas
 
-| Sistema | Terminal Predeterminada | Directorio Config |
-|---------|------------------------|-------------------|
-| WSL | Ubuntu (WSL) | `~/.vscode-server/data/Machine` |
-| Windows | Git Bash | `$APPDATA/Code/User` |
-| macOS | zsh | `~/Library/Application Support/Code/User` |
-| Linux | bash | `~/.config/Code/User` |
+| Sistema | Terminal Predeterminada | Directorio Config                         |
+| ------- | ----------------------- | ----------------------------------------- |
+| WSL     | Ubuntu (WSL)            | `~/.vscode-server/data/Machine`           |
+| Windows | Git Bash                | `$APPDATA/Code/User`                      |
+| macOS   | zsh                     | `~/Library/Application Support/Code/User` |
+| Linux   | bash                    | `~/.config/Code/User`                     |
 
 ## Verificación
 
 ### Script de Prueba
+
 ```bash
 ./test-wsl-terminal.sh
 ```
 
 ### Verificación Manual
+
 1. Abrir VS Code desde WSL: `code .`
 2. Abrir terminal: `Ctrl+`` (backtick)
 3. Verificar que muestre `Ubuntu (WSL)` en el dropdown
@@ -59,7 +62,9 @@ El script detecta WSL mediante:
 ## Troubleshooting
 
 ### Problema: Terminal sigue siendo Windows
+
 **Solución:**
+
 1. Ejecutar: `./install.sh` → Opción 5 (VS Code)
 2. Reiniciar VS Code completamente
 3. Verificar configuración manual:
@@ -68,13 +73,17 @@ El script detecta WSL mediante:
    - Seleccionar: `Ubuntu (WSL)`
 
 ### Problema: GitHub Copilot usa terminal incorrecta
+
 **Solución:**
+
 1. Verificar que `terminal.integrated.automationProfile.windows` esté en `null`
 2. Reiniciar VS Code
 3. Si persiste, reinstalar configuración con el script
 
 ### Problema: Extensiones no reconocen WSL
+
 **Solución:**
+
 1. Instalar extensión `ms-vscode-remote.remote-wsl`
 2. Abrir proyecto con `code .` desde WSL
 3. Verificar que VS Code muestre `WSL: Ubuntu` en la barra de estado

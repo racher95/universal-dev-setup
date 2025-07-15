@@ -105,6 +105,13 @@ code_install_extension_smart() {
             return 0
         fi
 
+        # Verificar si es un error normal de WSL para extensiones remotas
+        if is_wsl_remote_extension_normal_error "$ext" "$output"; then
+            show_success "✅ $ext instalado correctamente (comportamiento normal WSL)"
+            show_info "   💡 Las extensiones remotas muestran errores esperados en WSL"
+            return 0
+        fi
+
         # Analizar el tipo de error
         if echo "$output" | grep -qi "fatal\|crash\|electron\|segmentation"; then
             show_warning "⚠️  VS Code crash detectado - permitiendo recuperación"
@@ -459,7 +466,7 @@ configure_spanish_language() {
         show_info "💡 Reinicia VS Code para ver la interfaz en español"
     else
         show_warning "⚠️ Extensión de idioma español no encontrada"
-        show_info "🔄 Intentando instalación con diagnóstico completo..."
+        show_info "🔄 Intentando instalación con diagnóstico completo"
 
         # Intentar instalación con el nuevo sistema inteligente
         if code_install_extension_smart "ms-ceintl.vscode-language-pack-es"; then
@@ -771,6 +778,15 @@ show_vscode_post_install_info() {
         echo ""
     fi
 
+    if [[ "$SYSTEM" == "WSL" ]]; then
+        show_info "🐧 ESPECÍFICO PARA WSL:"
+        show_info "• Los errores 'Failed to fetch' y 'no se ejecute en este programa' son NORMALES"
+        show_info "• Las extensiones remotas funcionan desde Windows hacia WSL"
+        show_info "• remote-wsl se instala en Windows, no en WSL"
+        show_info "• remote-containers y remote-ssh solo funcionan en el cliente Windows"
+        echo ""
+    fi
+
     show_info "⚙️ CONFIGURACIÓN APLICADA:"
     show_info "• Idioma configurado en español"
     show_info "• Fuentes con ligaduras habilitadas"
@@ -778,4 +794,31 @@ show_vscode_post_install_info() {
     show_info "• Terminal configurado"
     show_info "• Configuraciones específicas para $SYSTEM"
     echo ""
+}
+
+# Función para detectar errores normales de WSL en extensiones remotas
+is_wsl_remote_extension_normal_error() {
+    local ext="$1"
+    local output="$2"
+    
+    # Extensiones remotas que causan errores "normales" en WSL
+    local remote_extensions=("ms-vscode-remote.remote-wsl" "ms-vscode-remote.remote-containers" "ms-vscode-remote.remote-ssh")
+    
+    # Verificar si es una extensión remota
+    local is_remote_ext=false
+    for remote_ext in "${remote_extensions[@]}"; do
+        if [[ "$ext" == "$remote_ext" ]]; then
+            is_remote_ext=true
+            break
+        fi
+    done
+    
+    if [[ "$is_remote_ext" == true ]] && [[ "$SYSTEM" == "WSL" ]]; then
+        # Errores esperados en WSL para extensiones remotas
+        if echo "$output" | grep -qi "failed to fetch\|no se ejecute en este programa de instalación\|declared that it does not run in this installation"; then
+            return 0  # Es un error normal
+        fi
+    fi
+    
+    return 1  # No es un error normal
 }

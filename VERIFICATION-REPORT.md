@@ -3,6 +3,7 @@
 ## 1. Configuración de Terminales por Sistema Operativo
 
 ### ✅ WSL (Windows con Ubuntu)
+
 - **Detección**: `$WSL_DISTRO_NAME` + `$OSTYPE == "linux-gnu"`
 - **Directorio**: `~/.vscode-server/data/Machine`
 - **Terminal**: `Ubuntu (WSL)` como predeterminada
@@ -19,6 +20,7 @@
   ```
 
 ### ✅ macOS (Nativo)
+
 - **Detección**: `$OSTYPE == "darwin"`
 - **Directorio**: `~/Library/Application Support/Code/User`
 - **Terminal**: `zsh` como predeterminada (compatible con iTerm2)
@@ -32,6 +34,7 @@
   ```
 
 ### ✅ Windows (Sin WSL)
+
 - **Detección**: `$OSTYPE == "msys"` o `$OSTYPE == "cygwin"`
 - **Directorio**: `$APPDATA/Code/User`
 - **Terminal**: `Git Bash` como predeterminada
@@ -47,6 +50,7 @@
   ```
 
 ### ✅ Linux (Nativo)
+
 - **Detección**: `$OSTYPE == "linux-gnu"` sin `$WSL_DISTRO_NAME`
 - **Directorio**: `~/.config/Code/User`
 - **Terminal**: Sistema predeterminado
@@ -54,12 +58,14 @@
 ## 2. Archivos Limpiados
 
 ### ❌ Archivos Eliminados (Innecesarios)
+
 - `scripts/vscode-simple.sh` - Versión de desarrollo
 - `scripts/vscode-broken.sh` - Versión de desarrollo
 - `scripts/vscode-complex.sh` - Versión de desarrollo
 - `scripts/legacy.sh` - Código obsoleto
 
 ### ✅ Archivos Mantenidos (Activos)
+
 - `scripts/vscode.sh` - **Archivo principal de configuración**
 - `scripts/dependencies.sh` - Instalación de dependencias
 - `scripts/fonts.sh` - Configuración de fuentes
@@ -69,23 +75,27 @@
 ## 3. Verificación de Extensiones
 
 ### ✅ Extensiones por Sistema
+
 - **macOS**: Sin extensiones WSL/Remote
 - **WSL**: Con extensiones Remote (`ms-vscode-remote.remote-wsl`)
 - **Windows**: Sin extensiones WSL (ya que no tiene WSL)
 - **Linux**: Extensiones base nativas
 
 ### ✅ Extensiones Discontinuadas Removidas
+
 - ❌ `ms-vsliveshare.vsliveshare-audio` - Eliminada de todos los archivos
 - ✅ `ms-vsliveshare.vsliveshare` - Mantenida
 
 ## 4. Archivos de Prueba/Utilidad
 
 ### ✅ Archivos de Prueba Útiles
+
 - `test-wsl-terminal.sh` - Prueba configuración WSL
 - `test-smart-crash-system.sh` - Prueba sistema anti-crash
 - `test-macos-anticrash.sh` - Prueba específica macOS
 
 ### ✅ Documentación
+
 - `WSL-TERMINAL-CONFIG.md` - Documentación específica WSL
 - `TERMINAL-CONFIG.md` - Documentación general
 
@@ -99,6 +109,7 @@
 6. **Extensiones por SO**: Correcta diferenciación por sistema
 
 ## ✅ Estado: Listo para Commit
+
 - Configuraciones terminales corregidas
 - Archivos innecesarios eliminados
 - Extensiones optimizadas por sistema

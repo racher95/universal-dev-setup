@@ -35,14 +35,14 @@ if [[ ! -f "$SETTINGS_FILE" ]]; then
     echo "⚠️  Advertencia: settings.json no existe"
 else
     echo "✅ settings.json encontrado"
-    
+
     # Verificar configuración de terminal WSL
     if grep -q "Ubuntu (WSL)" "$SETTINGS_FILE"; then
         echo "✅ Configuración de terminal Ubuntu WSL encontrada"
     else
         echo "❌ Error: Configuración de terminal Ubuntu WSL no encontrada"
     fi
-    
+
     # Verificar configuración predeterminada
     if grep -q '"terminal.integrated.defaultProfile.windows": "Ubuntu (WSL)"' "$SETTINGS_FILE"; then
         echo "✅ Terminal Ubuntu WSL configurada como predeterminada"
