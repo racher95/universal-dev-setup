@@ -427,6 +427,32 @@ main() {
         source "$(dirname "$0")/scripts/npm-tools.sh"
         source "$(dirname "$0")/scripts/git-config.sh"
 
+        # Función para configurar terminal
+        configure_terminal() {
+            show_step "Configurando terminal (Zsh + Oh My Zsh + Powerlevel10k)..."
+            
+            local terminal_script="$(dirname "$0")/scripts/terminal-setup.sh"
+            
+            if [[ -f "$terminal_script" ]]; then
+                echo -e "${BLUE}ℹ️  Ejecutando configuración completa del terminal...${NC}"
+                echo -e "${YELLOW}⚠️  Esto configurará Zsh, Oh My Zsh y Powerlevel10k${NC}"
+                echo ""
+                
+                # Ejecutar script de terminal
+                if bash "$terminal_script"; then
+                    show_status "Terminal configurado exitosamente"
+                    echo -e "${GREEN}✅ Zsh + Oh My Zsh + Powerlevel10k instalado${NC}"
+                    echo -e "${BLUE}ℹ️  Reinicia tu terminal para aplicar los cambios${NC}"
+                else
+                    show_error "Error al configurar terminal"
+                    return 1
+                fi
+            else
+                show_error "Script de terminal no encontrado: $terminal_script"
+                return 1
+            fi
+        }
+
         # Ejecutar instalación completa automáticamente
         echo -e "${CYAN}🚀 INICIANDO INSTALACIÓN AUTOMÁTICA COMPLETA...${NC}"
         echo ""
@@ -455,24 +481,25 @@ main() {
     # Mostrar menú
     while true; do
         show_menu
-        read -p "Selecciona una opción (1-10): " choice
+        read -p "Selecciona una opción (1-11): " choice
 
         case $choice in
             1) check_status ;;
             2) full_installation ;;
             3) install_base_dependencies ;;
             4) install_fonts ;;
-            5) install_vscode_extensions ;;
-            6) configure_vscode_settings ;;
-            7) install_npm_tools ;;
-            8) configure_git ;;
-            9) show_help ;;
-            10)
+            5) configure_terminal ;;
+            6) install_vscode_extensions ;;
+            7) configure_vscode_settings ;;
+            8) install_npm_tools ;;
+            9) configure_git ;;
+            10) show_help ;;
+            11)
                 echo -e "${CYAN}👋 ¡Gracias por usar Universal Development Setup!${NC}"
                 exit 0
                 ;;
             *)
-                show_error "Opción inválida. Selecciona 1-10."
+                show_error "Opción inválida. Selecciona 1-11."
                 ;;
         esac
 
@@ -489,12 +516,13 @@ show_menu() {
     echo "2. 🚀 Instalación completa"
     echo "3. 📦 Solo dependencias base"
     echo "4. 🔤 Solo fuentes de desarrollo"
-    echo "5. 🔌 Solo extensiones VS Code"
-    echo "6. ⚙️  Solo configuración VS Code"
-    echo "7. 🛠️  Solo herramientas npm"
-    echo "8. 🔧 Configurar Git (usuario/email)"
-    echo "9. 📚 Ayuda y documentación"
-    echo "10. ❌ Salir"
+    echo "5. �️  Solo configuración de terminal"
+    echo "6. �🔌 Solo extensiones VS Code"
+    echo "7. ⚙️  Solo configuración VS Code"
+    echo "8. 🛠️  Solo herramientas npm"
+    echo "9. 🔧 Configurar Git (usuario/email)"
+    echo "10. 📚 Ayuda y documentación"
+    echo "11. ❌ Salir"
 
     # Mostrar advertencias específicas para Windows
     if [[ "$SYSTEM" == "Windows" ]]; then
@@ -518,6 +546,7 @@ full_installation() {
 
     install_base_dependencies
     install_fonts
+    configure_terminal
     install_vscode_extensions
     configure_vscode_settings
     install_npm_tools
@@ -609,6 +638,24 @@ check_status() {
     else
         show_warning "Git no instalado"
     fi
+
+    # Verificar configuración de terminal
+    if command -v zsh &> /dev/null; then
+        show_status "Zsh instalado"
+        if [[ -d "$HOME/.oh-my-zsh" ]]; then
+            show_status "Oh My Zsh instalado"
+        else
+            show_warning "Oh My Zsh no instalado"
+        fi
+        
+        if [[ -f "$HOME/.p10k.zsh" ]]; then
+            show_status "Powerlevel10k configurado"
+        else
+            show_warning "Powerlevel10k no configurado"
+        fi
+    else
+        show_warning "Zsh no instalado"
+    fi
 }
 
 # Función para mostrar ayuda
@@ -621,16 +668,28 @@ show_help() {
     echo "• En WSL, VS Code debe estar instalado en Windows"
     echo "• Las fuentes requieren reinicio del terminal/VS Code"
     echo "• Para macOS, Homebrew se instala automáticamente"
+    echo "• La configuración de terminal requiere reinicio del terminal"
+    echo "• Zsh se configurará como shell por defecto automáticamente"
     echo ""
     echo -e "${YELLOW}📁 ARCHIVOS DE CONFIGURACIÓN:${NC}"
     echo "• VS Code: $VSCODE_SETTINGS_DIR/settings.json"
     echo "• Fuentes: $FONT_DIR"
+    echo "• Terminal: ~/.zshrc, ~/.p10k.zsh, ~/.oh-my-zsh/"
     echo "• Backups: $VSCODE_SETTINGS_DIR/settings.json.backup.*"
+    echo ""
+    echo -e "${YELLOW}🖥️ CONFIGURACIÓN DE TERMINAL:${NC}"
+    echo "• Instala Zsh como shell por defecto"
+    echo "• Configura Oh My Zsh con plugins esenciales"
+    echo "• Instala tema Powerlevel10k con configuración personalizada"
+    echo "• Incluye fuentes Nerd Font para iconos"
+    echo "• Compatible con macOS, Linux y WSL"
     echo ""
     echo -e "${YELLOW}🌐 RECURSOS ADICIONALES:${NC}"
     echo "• Documentación: https://github.com/tu-usuario/universal-dev-setup"
     echo "• Issues: https://github.com/tu-usuario/universal-dev-setup/issues"
     echo "• VS Code: https://code.visualstudio.com/"
+    echo "• Oh My Zsh: https://ohmyz.sh/"
+    echo "• Powerlevel10k: https://github.com/romkatv/powerlevel10k"
     echo ""
 }
 
