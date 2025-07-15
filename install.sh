@@ -407,6 +407,32 @@ finalize_logging() {
     fi
 }
 
+# Función para configurar terminal
+configure_terminal() {
+    show_step "Configurando terminal (Zsh + Oh My Zsh + Powerlevel10k)..."
+
+    local terminal_script="$(dirname "$0")/scripts/terminal-setup.sh"
+
+    if [[ -f "$terminal_script" ]]; then
+        echo -e "${BLUE}ℹ️  Ejecutando configuración completa del terminal...${NC}"
+        echo -e "${YELLOW}⚠️  Esto configurará Zsh, Oh My Zsh y Powerlevel10k${NC}"
+        echo ""
+
+        # Ejecutar script de terminal
+        if bash "$terminal_script"; then
+            show_status "Terminal configurado exitosamente"
+            echo -e "${GREEN}✅ Zsh + Oh My Zsh + Powerlevel10k instalado${NC}"
+            echo -e "${BLUE}ℹ️  Reinicia tu terminal para aplicar los cambios${NC}"
+        else
+            show_error "Error al configurar terminal"
+            return 1
+        fi
+    else
+        show_error "Script de terminal no encontrado: $terminal_script"
+        return 1
+    fi
+}
+
 # Función principal
 main() {
     # Inicializar logging
@@ -426,32 +452,6 @@ main() {
         source "$(dirname "$0")/scripts/vscode.sh"
         source "$(dirname "$0")/scripts/npm-tools.sh"
         source "$(dirname "$0")/scripts/git-config.sh"
-
-        # Función para configurar terminal
-        configure_terminal() {
-            show_step "Configurando terminal (Zsh + Oh My Zsh + Powerlevel10k)..."
-            
-            local terminal_script="$(dirname "$0")/scripts/terminal-setup.sh"
-            
-            if [[ -f "$terminal_script" ]]; then
-                echo -e "${BLUE}ℹ️  Ejecutando configuración completa del terminal...${NC}"
-                echo -e "${YELLOW}⚠️  Esto configurará Zsh, Oh My Zsh y Powerlevel10k${NC}"
-                echo ""
-                
-                # Ejecutar script de terminal
-                if bash "$terminal_script"; then
-                    show_status "Terminal configurado exitosamente"
-                    echo -e "${GREEN}✅ Zsh + Oh My Zsh + Powerlevel10k instalado${NC}"
-                    echo -e "${BLUE}ℹ️  Reinicia tu terminal para aplicar los cambios${NC}"
-                else
-                    show_error "Error al configurar terminal"
-                    return 1
-                fi
-            else
-                show_error "Script de terminal no encontrado: $terminal_script"
-                return 1
-            fi
-        }
 
         # Ejecutar instalación completa automáticamente
         echo -e "${CYAN}🚀 INICIANDO INSTALACIÓN AUTOMÁTICA COMPLETA...${NC}"
@@ -516,8 +516,8 @@ show_menu() {
     echo "2. 🚀 Instalación completa"
     echo "3. 📦 Solo dependencias base"
     echo "4. 🔤 Solo fuentes de desarrollo"
-    echo "5. �️  Solo configuración de terminal"
-    echo "6. �🔌 Solo extensiones VS Code"
+    echo "5. 🖥️  Solo configuración de terminal"
+    echo "6. 🔌 Solo extensiones VS Code"
     echo "7. ⚙️  Solo configuración VS Code"
     echo "8. 🛠️  Solo herramientas npm"
     echo "9. 🔧 Configurar Git (usuario/email)"
@@ -647,7 +647,7 @@ check_status() {
         else
             show_warning "Oh My Zsh no instalado"
         fi
-        
+
         if [[ -f "$HOME/.p10k.zsh" ]]; then
             show_status "Powerlevel10k configurado"
         else
@@ -693,5 +693,7 @@ show_help() {
     echo ""
 }
 
-# Ejecutar script principal
-main "$@"
+# Ejecutar script principal solo si se ejecuta directamente (no con source)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi
