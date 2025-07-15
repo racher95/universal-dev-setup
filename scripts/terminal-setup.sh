@@ -833,6 +833,58 @@ show_installation_summary() {
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# 🔄 FUNCIÓN PARA OFRECER VOLVER AL MENÚ PRINCIPAL
+# ═══════════════════════════════════════════════════════════════════════════════
+
+offer_return_to_main_menu() {
+    echo ""
+    echo -e "${CYAN}🎯 CONTINUAR CON CONFIGURACIÓN${NC}"
+    echo "═══════════════════════════════════════════════════════════════"
+    echo -e "${BLUE}¿Deseas continuar con más configuraciones?${NC}"
+    echo ""
+    echo -e "${YELLOW}Opciones disponibles:${NC}"
+    echo "• Configurar Git (usuario/email)"
+    echo "• Instalar extensiones de VS Code"
+    echo "• Instalar herramientas npm"
+    echo "• Verificar estado del sistema"
+    echo "• Ver ayuda y documentación"
+    echo ""
+
+    while true; do
+        read -p "¿Abrir menú principal del setup? (s/n): " menu_choice
+        case $menu_choice in
+            [Ss]|[Yy]|[Ss][Ii]|[Yy][Ee][Ss])
+                echo ""
+                echo -e "${CYAN}🚀 Abriendo menú principal...${NC}"
+                echo ""
+                
+                # Buscar el script install.sh
+                local install_script="$(dirname "$(dirname "${BASH_SOURCE[0]}")")/install.sh"
+                
+                if [[ -f "$install_script" ]]; then
+                    # Ejecutar el script principal
+                    exec bash "$install_script"
+                else
+                    show_error "No se encontró el script install.sh en: $install_script"
+                    echo -e "${BLUE}ℹ️  Puedes ejecutar manualmente: ./install.sh${NC}"
+                fi
+                break
+                ;;
+            [Nn]|[Nn][Oo])
+                echo ""
+                echo -e "${GREEN}✅ ¡Configuración del terminal completada!${NC}"
+                echo -e "${BLUE}ℹ️  Puedes ejecutar más tarde: ./install.sh${NC}"
+                echo -e "${YELLOW}⚡ Recuerda reiniciar tu terminal para aplicar todos los cambios${NC}"
+                break
+                ;;
+            *)
+                echo -e "${RED}❌ Respuesta inválida. Por favor responde 's' o 'n'${NC}"
+                ;;
+        esac
+    done
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # 🍎 FUNCIÓN PARA VERIFICAR Y OFRECER iTerm2 EN macOS
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1038,6 +1090,9 @@ main() {
 
     # Resumen de instalación
     show_installation_summary
+
+    # Ofrecer continuar con más configuraciones
+    offer_return_to_main_menu
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
