@@ -281,6 +281,10 @@ get_system_extensions() {
         "github.vscode-github-actions"
         "github.vscode-pull-request-github"
 
+        # Docker y Contenedores
+        "ms-azuretools.vscode-docker"
+        "ms-vscode-remote.remote-containers"
+
         # Colaboración
         "ms-vsliveshare.vsliveshare"
 
@@ -295,6 +299,21 @@ get_system_extensions() {
         "ms-vscode.cpptools"
         "rust-lang.rust-analyzer"
         "golang.go"
+
+        # Desarrollo web adicional
+        "bradlc.vscode-tailwindcss"
+        "pranaygp.vscode-css-peek"
+        "zignd.html-css-class-completion"
+        "ms-vscode.live-server"
+
+        # Markdown y documentación
+        "yzhang.markdown-all-in-one"
+        "shd101wyy.markdown-preview-enhanced"
+
+        # Utilidades de desarrollo
+        "wayou.vscode-todo-highlight"
+        "oderwat.indent-rainbow"
+        "mechatroner.rainbow-csv"
     )
 
     # Extensiones específicas por sistema
@@ -311,7 +330,6 @@ get_system_extensions() {
             local wsl_extensions=(
                 "${base_extensions[@]}"
                 "ms-vscode-remote.remote-wsl"
-                "ms-vscode-remote.remote-containers"
                 "ms-vscode-remote.remote-ssh"
             )
             echo "${wsl_extensions[@]}"
@@ -531,6 +549,9 @@ configure_vscode_settings() {
         "Windows")
             add_windows_settings
             ;;
+        "Linux")
+            add_linux_settings
+            ;;
     esac
 
     show_status "Settings.json configurado para $SYSTEM"
@@ -624,6 +645,15 @@ generate_base_settings() {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[markdown]": {
+    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
+  },
+  "[dockerfile]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-docker"
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[yml]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
 
@@ -643,12 +673,216 @@ generate_base_settings() {
   "liveServer.settings.port": 5500,
   "liveServer.settings.donotVerifyTags": true,
 
+  // === LIVE PREVIEW (MS) ===
+  "livePreview.defaultPreviewPath": "/",
+  "livePreview.portNumber": 3000,
+  "livePreview.showStatusBarItem": true,
+  "livePreview.autoRefreshPreview": "On Changes to Saved Files",
+  "livePreview.openPreviewTarget": "Beside",
+
   // === GIT CONFIGURATION ===
   "git.enableSmartCommit": true,
   "git.confirmSync": false,
   "git.autofetch": true,
   "gitlens.currentLine.enabled": false,
   "gitlens.hovers.currentLine.over": "line",
+
+  // === DOCKER CONFIGURATION ===
+  "docker.containers.label": "ContainerName",
+  "docker.containers.groupBy": "None",
+  "docker.containers.showFiles": true,
+  "docker.images.label": "Tag",
+  "docker.images.groupBy": "None",
+
+  // === MARKDOWN CONFIGURATION ===
+  "markdown.extension.toc.levels": "1..6",
+  "markdown.extension.preview.autoShowPreviewToSide": false,
+  "markdown.extension.orderedList.marker": "ordered",
+  "markdown.extension.list.indentationSize": "adaptive",
+  "markdown.extension.boldAndItalic.marker": "**",
+  "markdown.extension.italic.marker": "*",
+  "markdown.extension.completion.root": "./",
+  "markdown.extension.math.enabled": true,
+  "markdown.extension.tableFormatter.enabled": true,
+  "[markdown]": {
+    "editor.defaultFormatter": "yzhang.markdown-all-in-one",
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": true,
+      "strings": true
+    }
+  },
+
+  // === TODO TREE CONFIGURATION ===
+  "todo-tree.general.tags": [
+    "TODO",
+    "FIXME",
+    "NOTE",
+    "HACK",
+    "XXX",
+    "BUG",
+    "OPTIMIZE"
+  ],
+  "todo-tree.highlights.defaultHighlight": {
+    "icon": "alert",
+    "type": "tag",
+    "foreground": "yellow",
+    "background": "black",
+    "opacity": 50,
+    "iconColour": "yellow"
+  },
+  "todo-tree.highlights.customHighlight": {
+    "TODO": {
+      "icon": "check",
+      "foreground": "black",
+      "background": "yellow",
+      "iconColour": "yellow"
+    },
+    "FIXME": {
+      "icon": "alert",
+      "foreground": "white",
+      "background": "red",
+      "iconColour": "red"
+    },
+    "NOTE": {
+      "icon": "note",
+      "foreground": "white",
+      "background": "blue",
+      "iconColour": "blue"
+    },
+    "BUG": {
+      "icon": "bug",
+      "foreground": "white",
+      "background": "red",
+      "iconColour": "red"
+    }
+  },
+
+  // === TODO HIGHLIGHT CONFIGURATION ===
+  "todohighlight.isEnable": true,
+  "todohighlight.isCaseSensitive": false,
+  "todohighlight.keywords": [
+    {
+      "text": "TODO:",
+      "color": "black",
+      "backgroundColor": "yellow",
+      "overviewRulerColor": "yellow"
+    },
+    {
+      "text": "FIXME:",
+      "color": "white",
+      "backgroundColor": "red",
+      "overviewRulerColor": "red"
+    },
+    {
+      "text": "NOTE:",
+      "color": "white",
+      "backgroundColor": "blue",
+      "overviewRulerColor": "blue"
+    },
+    {
+      "text": "HACK:",
+      "color": "white",
+      "backgroundColor": "orange",
+      "overviewRulerColor": "orange"
+    },
+    {
+      "text": "BUG:",
+      "color": "white",
+      "backgroundColor": "red",
+      "overviewRulerColor": "red"
+    }
+  ],
+  "todohighlight.maxFilesForSearch": 5120,
+  "todohighlight.toggleURI": false,
+
+  // === ERROR LENS CONFIGURATION ===
+  "errorLens.enabled": true,
+  "errorLens.enabledDiagnosticLevels": ["error", "warning", "info"],
+  "errorLens.fontSize": "0.9em",
+  "errorLens.fontFamily": "Fira Code",
+  "errorLens.fontWeight": "normal",
+  "errorLens.messageMaxChars": 200,
+  "errorLens.delay": 300,
+  "errorLens.onSave": false,
+  "errorLens.onSaveTimeout": 1000,
+
+  // === INDENT RAINBOW CONFIGURATION ===
+  "indentRainbow.indicatorStyle": "light",
+  "indentRainbow.lightIndicatorStyleLineWidth": 1,
+  "indentRainbow.colors": [
+    "rgba(255,255,64,0.07)",
+    "rgba(127,255,127,0.07)",
+    "rgba(255,127,255,0.07)",
+    "rgba(79,236,236,0.07)"
+  ],
+  "indentRainbow.errorColor": "rgba(128,32,32,0.6)",
+  "indentRainbow.tabmixColor": "rgba(128,32,96,0.6)",
+
+  // === RAINBOW CSV CONFIGURATION ===
+  "rainbow_csv.enable_auto_csv_lint": true,
+  "rainbow_csv.enable_tooltip": true,
+  "rainbow_csv.csv_lint_detect_trailing_spaces": true,
+  "rainbow_csv.autodetect_separators": [",", ";", "|", "\t"],
+
+  // === HTML CSS SUPPORT ===
+  "css.validate": true,
+  "scss.validate": true,
+  "less.validate": true,
+  "html.format.enable": true,
+  "html.format.preserveNewLines": true,
+  "html.format.indentInnerHtml": true,
+  "html.format.wrapLineLength": 120,
+  "html.format.unformatted": "wbr",
+  "html.format.contentUnformatted": "pre,code,textarea",
+  "html.format.extraLiners": "head, body, /html",
+  "html.format.wrapAttributes": "auto",
+  "html.format.templating": false,
+  "html.format.unformattedContentDelimiter": "",
+
+  // === EMMET CONFIGURATION ===
+  "emmet.includeLanguages": {
+    "javascript": "javascriptreact",
+    "typescript": "typescriptreact"
+  },
+  "emmet.triggerExpansionOnTab": true,
+  "emmet.showExpandedAbbreviation": "always",
+  "emmet.showSuggestionsAsSnippets": true,
+
+  // === SPELL CHECKER CONFIGURATION ===
+  "cSpell.language": "en,es",
+  "cSpell.enableFiletypes": [
+    "markdown",
+    "text",
+    "html",
+    "javascript",
+    "typescript",
+    "json"
+  ],
+  "cSpell.diagnosticLevel": "Warning",
+  "cSpell.showStatus": true,
+  "cSpell.spellCheckDelayMs": 50,
+
+  // === TAILWIND CSS CONFIGURATION ===
+  "tailwindCSS.includeLanguages": {
+    "javascript": "javascript",
+    "html": "html",
+    "typescript": "typescript",
+    "javascriptreact": "javascript",
+    "typescriptreact": "typescript"
+  },
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+    ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+  ],
+  "tailwindCSS.validate": true,
+  "tailwindCSS.lint.cssConflict": "warning",
+  "tailwindCSS.lint.invalidApply": "error",
+  "tailwindCSS.lint.invalidScreen": "error",
+  "tailwindCSS.lint.invalidVariant": "error",
+  "tailwindCSS.lint.invalidConfigPath": "error",
+  "tailwindCSS.lint.invalidTailwindDirective": "error",
+  "tailwindCSS.lint.recommendedVariantOrder": "warning",
 
   // === SECURITY ===
   "security.workspace.trust.untrustedFiles": "open",
@@ -672,7 +906,14 @@ add_wsl_settings() {
       "icon": "terminal-ubuntu"
     }
   },
-  "terminal.integrated.automationProfile.windows": null
+  "terminal.integrated.automationProfile.windows": null,
+
+  // === DOCKER EN WSL ===
+  "docker.dockerPath": "docker",
+  "docker.host": "unix:///var/run/docker.sock",
+  "docker.enableDockerComposeLanguageService": true,
+  "docker.showStartPage": false,
+  "docker.commands.build": "docker build --pull --rm -f \"Dockerfile\" -t \${imageName} \".\""
 }
 EOF
 )
@@ -698,7 +939,14 @@ add_macos_settings() {
       "args": ["-l"]
     }
   },
-  "editor.fontFamily": "'Fira Code', 'JetBrains Mono', 'SF Mono', 'Monaco', monospace"
+  "editor.fontFamily": "'Fira Code', 'JetBrains Mono', 'SF Mono', 'Monaco', monospace",
+
+  // === DOCKER EN MACOS ===
+  "docker.dockerPath": "docker",
+  "docker.host": "unix:///var/run/docker.sock",
+  "docker.enableDockerComposeLanguageService": true,
+  "docker.showStartPage": false,
+  "docker.commands.build": "docker build --pull --rm -f \"Dockerfile\" -t \${imageName} \".\""
 }
 EOF
 )
@@ -706,6 +954,39 @@ EOF
     # Agregar configuraciones macOS al archivo
     remove_last_line "$VSCODE_SETTINGS_DIR/settings.json" "$VSCODE_SETTINGS_DIR/settings.tmp"
     echo "$macos_config" >> "$VSCODE_SETTINGS_DIR/settings.tmp"
+    mv "$VSCODE_SETTINGS_DIR/settings.tmp" "$VSCODE_SETTINGS_DIR/settings.json"
+}
+
+add_linux_settings() {
+    local linux_config=$(cat << 'EOF'
+  ,
+  // === LINUX SPECIFIC SETTINGS ===
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.profiles.linux": {
+    "bash": {
+      "path": "bash",
+      "args": ["-l"]
+    },
+    "zsh": {
+      "path": "zsh",
+      "args": ["-l"]
+    }
+  },
+  "editor.fontFamily": "'Fira Code', 'JetBrains Mono', 'Cascadia Code', 'Inconsolata', 'monospace'",
+
+  // === DOCKER EN LINUX ===
+  "docker.dockerPath": "docker",
+  "docker.host": "unix:///var/run/docker.sock",
+  "docker.enableDockerComposeLanguageService": true,
+  "docker.showStartPage": false,
+  "docker.commands.build": "docker build --pull --rm -f \"Dockerfile\" -t \${imageName} \".\""
+}
+EOF
+)
+
+    # Agregar configuraciones Linux al archivo
+    remove_last_line "$VSCODE_SETTINGS_DIR/settings.json" "$VSCODE_SETTINGS_DIR/settings.tmp"
+    echo "$linux_config" >> "$VSCODE_SETTINGS_DIR/settings.tmp"
     mv "$VSCODE_SETTINGS_DIR/settings.tmp" "$VSCODE_SETTINGS_DIR/settings.json"
 }
 
@@ -802,10 +1083,10 @@ show_vscode_post_install_info() {
 is_wsl_remote_extension_normal_error() {
     local ext="$1"
     local output="$2"
-    
+
     # Extensiones remotas que causan errores "normales" en WSL
     local remote_extensions=("ms-vscode-remote.remote-wsl" "ms-vscode-remote.remote-containers" "ms-vscode-remote.remote-ssh")
-    
+
     # Verificar si es una extensión remota
     local is_remote_ext=false
     for remote_ext in "${remote_extensions[@]}"; do
@@ -814,13 +1095,13 @@ is_wsl_remote_extension_normal_error() {
             break
         fi
     done
-    
+
     if [[ "$is_remote_ext" == true ]] && [[ "$SYSTEM" == "WSL" ]]; then
         # Errores esperados en WSL para extensiones remotas
         if echo "$output" | grep -qi "failed to fetch\|no se ejecute en este programa de instalación\|declared that it does not run in this installation"; then
             return 0  # Es un error normal
         fi
     fi
-    
+
     return 1  # No es un error normal
 }

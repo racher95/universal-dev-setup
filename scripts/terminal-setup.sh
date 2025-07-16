@@ -181,7 +181,7 @@ install_dependencies() {
             brew update
 
             show_info "Instalando dependencias..."
-            brew install zsh git curl wget
+            brew install zsh git curl wget coreutils
             ;;
         "dnf")
             show_info "Instalando dependencias con dnf..."
@@ -213,14 +213,14 @@ install_fonts() {
                 show_info "Desvinculando tap obsoleto 'homebrew/cask-fonts'..."
                 brew untap homebrew/cask-fonts
             fi
-            
+
             # Las fuentes Nerd Font ahora están disponibles directamente
             local fonts=(
                 "font-meslo-lg-nerd-font"
                 "font-fira-code-nerd-font"
                 "font-jetbrains-mono-nerd-font"
             )
-            
+
             for font in "${fonts[@]}"; do
                 if ! brew list --cask "$font" &> /dev/null; then
                     show_info "Instalando $font..."
@@ -377,21 +377,25 @@ validate_plugin_sync() {
         done
     fi
 
-    # Obtener plugins en .zshrc
+    # Obtener plugins en .zshrc (versión compatible con macOS y Linux)
     if [[ -f "$zshrc_file" ]]; then
-        local plugins_line=$(grep -A 20 "plugins=(" "$zshrc_file" | grep -B 20 ")" | head -n -1 | tail -n +2)
+        # Usar awk para extraer plugins entre plugins=( y ) - compatible con BSD y GNU
+        local plugins_block=$(awk '/^plugins=\(/,/\)/ {if ($0 !~ /^plugins=\(/ && $0 !~ /^\)/) print $0}' "$zshrc_file")
         while IFS= read -r line; do
-            local plugin=$(echo "$line" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
-            if [[ -n "$plugin" && "$plugin" != ")" ]]; then
+            # Limpiar línea (quitar espacios y comentarios)
+            local plugin=$(echo "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/#.*//')
+            if [[ -n "$plugin" ]]; then
                 plugins_in_zshrc+=("$plugin")
             fi
-        done <<< "$plugins_line"
+        done <<< "$plugins_block"
     fi
 
     # Validar sincronización
     local missing_plugins=()
     for plugin in "${plugins_installed[@]}"; do
-        if [[ ! " ${plugins_in_zshrc[@]} " =~ " ${plugin} " ]]; then
+        if [[ ${#plugins_in_zshrc[@]} -gt 0 && ! " ${plugins_in_zshrc[@]} " =~ " ${plugin} " ]]; then
+            missing_plugins+=("$plugin")
+        elif [[ ${#plugins_in_zshrc[@]} -eq 0 ]]; then
             missing_plugins+=("$plugin")
         fi
     done
@@ -468,7 +472,8 @@ install_additional_tools() {
                 ripgrep \
                 neofetch \
                 autojump \
-                thefuck
+                thefuck \
+                coreutils
             ;;
     esac
 
@@ -693,8 +698,21 @@ validate_complete_installation() {
         validation_errors+=("ARGOS no está instalado")
     fi
 
-    if [[ ! -f "$HOME/.local/share/argos/Argos-FetchWU.png" ]]; then
+    # Verificar imagen ARGOS según el sistema
+    local argos_image=""
+    if [[ "$SYSTEM" == "macOS" ]]; then
+        argos_image="$HOME/.local/share/argos/loboMacOS.png"
+    else
+        argos_image="$HOME/.local/share/argos/Argos-FetchWU.png"
+    fi
+
+    if [[ ! -f "$argos_image" ]]; then
         validation_errors+=("Imagen ARGOS no está instalada")
+    fi
+
+    # Verificar imagen genérica para el script portable
+    if [[ ! -f "$HOME/.local/share/argos/argos-image.png" ]]; then
+        validation_errors+=("Imagen genérica ARGOS no está instalada")
     fi
 
     # Verificar chafa (solo si es necesario según el terminal)
@@ -875,10 +893,10 @@ offer_return_to_main_menu() {
                 echo ""
                 echo -e "${CYAN}🚀 Abriendo menú principal...${NC}"
                 echo ""
-                
+
                 # Buscar el script install.sh
                 local install_script="$(dirname "$(dirname "${BASH_SOURCE[0]}")")/install.sh"
-                
+
                 if [[ -f "$install_script" ]]; then
                     # Ejecutar el script principal
                     exec bash "$install_script"

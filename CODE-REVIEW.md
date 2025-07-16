@@ -127,7 +127,6 @@ configs/                # Archivos de configuración
 ├── .p10k.zsh          # ✅ Existente
 ├── Argos-FetchWU.png  # ✅ Existente
 ├── loboMacOS.png      # ✅ Existente
-├── argos-fetch        # ✅ Existente
 └── argos-fetch-portable # ✅ Existente
 ```
 
