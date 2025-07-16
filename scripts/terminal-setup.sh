@@ -447,7 +447,6 @@ install_additional_tools() {
                 fd-find \
                 fzf \
                 ripgrep \
-                neofetch \
                 autojump \
                 python3-pip
 
@@ -466,7 +465,6 @@ install_additional_tools() {
                 fd \
                 fzf \
                 ripgrep \
-                neofetch \
                 autojump \
                 thefuck
             ;;

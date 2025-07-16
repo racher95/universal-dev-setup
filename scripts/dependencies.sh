@@ -381,8 +381,7 @@ install_dev_tools() {
                 ripgrep \
                 fzf \
                 eza \
-                htop \
-                neofetch 2>/dev/null || true
+                htop 2>/dev/null || true
             ;;
         "WSL"|"Linux")
             sudo apt install -y \
@@ -391,8 +390,7 @@ install_dev_tools() {
                 ripgrep \
                 fzf \
                 eza \
-                htop \
-                neofetch 2>/dev/null || true
+                htop 2>/dev/null || true
 
             # Crear enlaces simbólicos si es necesario
             if [[ ! -f "/usr/local/bin/bat" ]] && [[ -f "/usr/bin/batcat" ]]; then
