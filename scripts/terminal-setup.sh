@@ -70,7 +70,13 @@ show_step() {
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 🔍 FUNCIONES DE DETECCIÓN DEL SISTEMA
+# �️ FUNCIONES AUXILIARES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Función eliminada - no era necesaria
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# �🔍 FUNCIONES DE DETECCIÓN DEL SISTEMA
 # ═══════════════════════════════════════════════════════════════════════════════
 
 detect_system() {
@@ -363,6 +369,9 @@ install_zsh_plugins() {
 validate_plugin_sync() {
     show_step "Validando sincronización de plugins..."
 
+    # Desactivar temporalmente set -u para manejar arrays vacíos
+    set +u
+    
     local zshrc_file="$HOME/.zshrc"
     local plugins_installed=()
     local plugins_in_zshrc=()
@@ -377,25 +386,52 @@ validate_plugin_sync() {
         done
     fi
 
-    # Obtener plugins en .zshrc
+    # Obtener plugins en .zshrc usando comandos específicos por sistema
     if [[ -f "$zshrc_file" ]]; then
-        local plugins_line=$(grep -A 20 "plugins=(" "$zshrc_file" | grep -B 20 ")" | head -n -1 | tail -n +2)
-        while IFS= read -r line; do
-            local plugin=$(echo "$line" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
-            if [[ -n "$plugin" && "$plugin" != ")" ]]; then
-                plugins_in_zshrc+=("$plugin")
-            fi
-        done <<< "$plugins_line"
+        local plugins_section=""
+        
+        # Comandos separados por sistema operativo
+        if [[ "$SYSTEM" == "macOS" ]]; then
+            # macOS (BSD) - usar awk para extraer plugins
+            plugins_section=$(awk '/plugins=\(/,/\)/' "$zshrc_file" | sed '1d;$d')
+        else
+            # Linux/WSL (GNU) - usar sed con head/tail que funciona en GNU
+            plugins_section=$(sed -n '/plugins=(/,/)/p' "$zshrc_file" | sed '1d;$d')
+        fi
+        
+        if [[ -n "$plugins_section" ]]; then
+            # Procesar cada línea
+            while IFS= read -r line; do
+                # Limpiar espacios y comentarios
+                line=$(echo "$line" | sed 's/#.*//g' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+                if [[ -n "$line" ]]; then
+                    plugins_in_zshrc+=("$line")
+                fi
+            done <<< "$plugins_section"
+        fi
     fi
 
-    # Validar sincronización
+    # Validar sincronización solo si hay plugins instalados
     local missing_plugins=()
-    for plugin in "${plugins_installed[@]}"; do
-        if [[ ! " ${plugins_in_zshrc[@]} " =~ " ${plugin} " ]]; then
-            missing_plugins+=("$plugin")
-        fi
-    done
+    if [[ ${#plugins_installed[@]} -gt 0 ]]; then
+        for plugin in "${plugins_installed[@]}"; do
+            local found=false
+            # Solo verificar si hay plugins en zshrc
+            if [[ ${#plugins_in_zshrc[@]} -gt 0 ]]; then
+                for zshrc_plugin in "${plugins_in_zshrc[@]}"; do
+                    if [[ "$plugin" == "$zshrc_plugin" ]]; then
+                        found=true
+                        break
+                    fi
+                done
+            fi
+            if [[ "$found" == false ]]; then
+                missing_plugins+=("$plugin")
+            fi
+        done
+    fi
 
+    # Mostrar resultados
     if [[ ${#missing_plugins[@]} -gt 0 ]]; then
         show_warning "Plugins instalados pero no configurados en .zshrc:"
         for plugin in "${missing_plugins[@]}"; do
@@ -404,6 +440,9 @@ validate_plugin_sync() {
     else
         show_success "Todos los plugins están correctamente sincronizados"
     fi
+    
+    # Reactivar set -u
+    set -u
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -531,22 +570,58 @@ configure_shell() {
         return 0
     fi
 
-    # Obtener la ruta de zsh
-    local zsh_path=$(which zsh)
-
-    # Agregar zsh a /etc/shells si no está
-    if ! grep -q "$zsh_path" /etc/shells; then
-        show_info "Agregando zsh a /etc/shells..."
-        echo "$zsh_path" | sudo tee -a /etc/shells
+    # Obtener la ruta de zsh con fallback
+    local zsh_path=$(which zsh 2>/dev/null || echo "/bin/zsh")
+    
+    # Verificar que zsh existe
+    if [[ ! -x "$zsh_path" ]]; then
+        show_error "No se encontró zsh en el sistema"
+        return 1
     fi
 
-    # Cambiar shell por defecto
-    show_warning "Se te solicitará tu contraseña para cambiar el shell por defecto"
-    show_info "Cambiando shell por defecto a zsh..."
-    chsh -s "$zsh_path"
+    # Verificar según el sistema operativo
+    case "$SYSTEM" in
+        "macOS"|"Linux"|"WSL")
+            # Agregar zsh a /etc/shells si no está (requiere sudo)
+            if ! grep -q "$zsh_path" /etc/shells 2>/dev/null; then
+                show_info "Agregando zsh a /etc/shells..."
+                if ! echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null 2>&1; then
+                    show_warning "No se pudo agregar zsh a /etc/shells. Continuando..."
+                fi
+            fi
 
-    show_success "Zsh configurado como shell por defecto"
-    show_warning "Cierra y reabre la terminal para aplicar los cambios"
+            # Intentar cambiar shell por defecto
+            show_info "Cambiando shell por defecto a zsh..."
+            show_warning "Se te solicitará tu contraseña si es necesario"
+            
+            if chsh -s "$zsh_path" 2>/dev/null; then
+                show_success "✅ Shell cambiado a Zsh exitosamente"
+                show_warning "⚠️ Cierra y reabre la terminal para aplicar los cambios"
+            else
+                show_warning "⚠️ No se pudo cambiar el shell automáticamente"
+                show_info "💡 Opciones alternativas:"
+                show_info "   1. Ejecuta manualmente: chsh -s $zsh_path"
+                show_info "   2. O configura tu terminal para usar zsh por defecto"
+                show_info "   3. En algunos sistemas, puedes necesitar privilegios adicionales"
+                
+                # Mostrar instrucciones específicas por sistema
+                case "$SYSTEM" in
+                    "macOS")
+                        show_info "   • En macOS: System Preferences > Users & Groups > Advanced Options"
+                        ;;
+                    "WSL")
+                        show_info "   • En WSL: Agrega 'zsh' al final de tu .bashrc"
+                        ;;
+                esac
+            fi
+            ;;
+        *)
+            show_info "ℹ️ Cambio de shell no implementado para $SYSTEM"
+            show_info "   Por favor, configura manualmente tu terminal para usar zsh"
+            ;;
+    esac
+
+    show_success "Configuración de shell completada"
 }
 
 install_argos_system() {
