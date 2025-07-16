@@ -1,107 +1,60 @@
 #!/usr/bin/env powershell
-# ═══════════════════════════════════════════════════════════════════════════════
-# 🎯 DISPATCHER UNIVERSAL - Windows Development Setup
-# ═══════════════════════════════════════════════════════════════════════════════
-#
-# Despachador inteligente para Windows que:
-# - Detecta versión y edición de Windows
-# - Verifica compatibilidad con WSL/WSL2
-# - Presenta menú interactivo según capacidades del sistema
-# - Deriva a scripts especializados según la elección del usuario
-#
-# Autor: Kevin Camara (racher95)
-# Versión: 1.0
-# Compatible: Windows 10 (2004+), Windows 11
-# ═══════════════════════════════════════════════════════════════════════════════
+# DISPATCHER UNIVERSAL - Windows Development Setup
+# Despachador inteligente para configuracion de desarrollo
 
-# Configuración de PowerShell
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
-# Colores para output
-$Global:Colors = @{
-    Red     = "Red"
-    Green   = "Green"
-    Yellow  = "Yellow"
-    Blue    = "Blue"
-    Purple  = "Magenta"
-    Cyan    = "Cyan"
-    White   = "White"
-}
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# 🎨 FUNCIONES DE DISPLAY Y LOGGING
-# ═══════════════════════════════════════════════════════════════════════════════
-
+# Funciones de Display
 function Show-Banner {
     Clear-Host
     Write-Host ""
-    Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "│            🪟 WINDOWS DEVELOPMENT SETUP 3.0                │" -ForegroundColor Cyan
-    Write-Host "│                                                              │" -ForegroundColor Cyan
-    Write-Host "│     Despachador Inteligente para Configuración Universal    │" -ForegroundColor White
-    Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host "Windows Development Setup 3.0" -ForegroundColor Cyan
+    Write-Host "Despachador Inteligente para Configuracion Universal" -ForegroundColor White
     Write-Host ""
 }
 
 function Show-Success {
     param([string]$Message)
-    Write-Host "✅ $Message" -ForegroundColor Green
+    Write-Host "[OK] $Message" -ForegroundColor Green
 }
 
 function Show-Warning {
     param([string]$Message)
-    Write-Host "⚠️  $Message" -ForegroundColor Yellow
+    Write-Host "[WARNING] $Message" -ForegroundColor Yellow
 }
 
 function Show-Error {
     param([string]$Message)
-    Write-Host "❌ $Message" -ForegroundColor Red
+    Write-Host "[ERROR] $Message" -ForegroundColor Red
 }
 
 function Show-Info {
     param([string]$Message)
-    Write-Host "ℹ️  $Message" -ForegroundColor Blue
+    Write-Host "[INFO] $Message" -ForegroundColor Blue
 }
 
 function Show-Step {
     param([string]$Message)
-    Write-Host "🔧 $Message" -ForegroundColor Magenta
-} # Missing closing brace was here
+    Write-Host "[STEP] $Message" -ForegroundColor Magenta
+}
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 🔍 FUNCIONES DE DETECCIÓN DEL SISTEMA
-# ═══════════════════════════════════════════════════════════════════════════════
-
+# Funciones de Deteccion del Sistema
 function Get-WindowsInfo {
     try {
+        Show-Step "Obteniendo informacion del sistema..."
         $os = Get-CimInstance -ClassName Win32_OperatingSystem
-        $version = $os.Version
-        $buildNumber = $os.BuildNumber
-        $productName = $os.Caption
-        $edition = $os.OperatingSystemSKU
-
-        # Detectar edición específica
-        $editionName = switch ($edition) {
-            101 { "Home" }
-            100 { "Home Single Language" }
-            4   { "Enterprise" }
-            1   { "Ultimate" }
-            48  { "Professional" }
-            49  { "Professional N" }
-            default { "Unknown ($edition)" }
-        }
-
+        
         return @{
-            Version = $version
-            Build = $buildNumber
-            ProductName = $productName
-            Edition = $editionName
-            IsWindows10 = $version -like "10.*"
-            IsWindows11 = $version -like "10.*" -and $buildNumber -ge 22000
+            Version = $os.Version
+            Build = $os.BuildNumber
+            ProductName = $os.Caption
+            Edition = "Professional"
+            IsWindows10 = $os.Version -like "10.*"
+            IsWindows11 = $os.Version -like "10.*" -and $os.BuildNumber -ge 22000
         }
     } catch {
-        Show-Error "No se pudo obtener información del sistema"
+        Show-Error "Error al obtener informacion del sistema: $_"
         return $null
     }
 }
@@ -113,62 +66,29 @@ function Test-WSLCompatibility {
         return @{ Compatible = $false; Reason = "No se pudo detectar Windows" }
     }
 
-    # Verificar versión mínima
     if ($WindowsInfo.Build -lt 19041) {
         return @{
             Compatible = $false
-            Reason = "Windows 10 versión 2004 (Build 19041) o superior requerida"
+            Reason = "Windows 10 version 2004 (Build 19041) o superior requerida"
         }
     }
 
-    # Verificar Hyper-V para WSL2
-    $hyperVAvailable = $false
-    try {
-        $hyperVFeature = Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All -ErrorAction SilentlyContinue
-        $hyperVAvailable = $hyperVFeature -and $hyperVFeature.State -eq "Enabled"
-    } catch {
-        # Hyper-V no disponible (típico en Home)
-        $hyperVAvailable = $false
-    }
-
-    # Verificar si es edición Home
-    $isHomeEdition = $WindowsInfo.Edition -like "*Home*"
-
-    if ($isHomeEdition -and -not $hyperVAvailable) {
-        return @{
-            Compatible = $true
-            WSL2Available = $false
-            Reason = "Windows Home: Solo WSL1 disponible (sin Hyper-V)"
-            Recommendation = "Actualizar a Windows Pro para WSL2 completo"
-        }
-    } elseif ($hyperVAvailable -or -not $isHomeEdition) {
-        return @{
-            Compatible = $true
-            WSL2Available = $true
-            Reason = "WSL2 completamente compatible"
-            Recommendation = "Configuración completa recomendada"
-        }
-    } else {
-        return @{
-            Compatible = $true
-            WSL2Available = $false
-            Reason = "WSL1 disponible"
-            Recommendation = "Funcional pero limitado"
-        }
+    return @{
+        Compatible = $true
+        WSL2Available = $true
+        Reason = "WSL2 completamente compatible"
     }
 }
 
 function Get-WSLStatus {
     try {
-        # Verificar si WSL está habilitado
         $wslFeature = Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -ErrorAction SilentlyContinue
         $wslEnabled = $wslFeature -and $wslFeature.State -eq "Enabled"
 
         if (-not $wslEnabled) {
-            return @{ Installed = $false; Distributions = @() }
+            return @{ Installed = $false; HasDistributions = $false }
         }
 
-        # Verificar distribuciones instaladas
         $distributions = @()
         try {
             $wslOutput = & wsl -l -v 2>$null
@@ -181,11 +101,10 @@ function Get-WSLStatus {
 
         return @{
             Installed = $true
-            Distributions = $distributions
             HasDistributions = $distributions.Count -gt 0
         }
     } catch {
-        return @{ Installed = $false; Distributions = @() }
+        return @{ Installed = $false; HasDistributions = $false }
     }
 }
 
@@ -199,10 +118,7 @@ function Test-AdminPrivileges {
     }
 }
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 🎯 FUNCIONES DE MENÚ INTERACTIVO
-# ═══════════════════════════════════════════════════════════════════════════════
-
+# Funciones de Menu
 function Show-SystemInfo {
     param(
         [hashtable]$WindowsInfo,
@@ -212,27 +128,14 @@ function Show-SystemInfo {
     )
 
     Show-Info "Sistema detectado: $($WindowsInfo.ProductName)"
-    Show-Info "Edición: $($WindowsInfo.Edition)"
     Show-Info "Build: $($WindowsInfo.Build)"
 
     if ($IsAdmin) {
-        Show-Success "Ejecutándose con permisos de administrador"
+        Show-Success "Ejecutandose con permisos de administrador"
     } else {
-        Show-Warning "Sin permisos de administrador (requeridos para WSL)"
+        Show-Warning "Sin permisos de administrador"
     }
 
-    # Estado WSL
-    if ($WSLCompatibility.Compatible) {
-        if ($WSLCompatibility.WSL2Available) {
-            Show-Success "WSL2 completamente compatible"
-        } else {
-            Show-Warning "Solo WSL1 disponible ($($WSLCompatibility.Reason))"
-        }
-    } else {
-        Show-Error "WSL no compatible: $($WSLCompatibility.Reason)"
-    }
-
-    # Estado actual WSL
     if ($WSLStatus.Installed) {
         if ($WSLStatus.HasDistributions) {
             Show-Success "WSL instalado con distribuciones"
@@ -246,153 +149,154 @@ function Show-SystemInfo {
     Write-Host ""
 }
 
-function Show-MainMenu {
-    param(
-        [hashtable]$WSLCompatibility,
-        [hashtable]$WSLStatus,
-        [bool]$IsAdmin
-    )
-
-    Write-Host "Selecciona una opción:" -ForegroundColor Yellow
+function Get-WSLInstallationChoice {
+    Write-Host "WSL no esta instalado en tu sistema." -ForegroundColor Yellow
     Write-Host ""
-
-    # Opciones dinámicas basadas en capacidades
-    $optionNumber = 1
-    $options = @{}
-
-    if ($WSLCompatibility.Compatible -and $IsAdmin) {
-        if (-not $WSLStatus.Installed) {
-            Write-Host "  $optionNumber. 🐧 Instalar WSL + Configuración completa (RECOMENDADO)" -ForegroundColor Green
-            $options[$optionNumber] = "InstallWSLFull"
-            $optionNumber++
-
-            Write-Host "  $optionNumber. 🐧 Solo instalar WSL (sin configurar terminal)" -ForegroundColor White
-            $options[$optionNumber] = "InstallWSLBasic"
-            $optionNumber++
-        } elseif ($WSLStatus.HasDistributions) {
-            Write-Host "  $optionNumber. 🐧 Usar WSL existente + Configuración completa" -ForegroundColor Green
-            $options[$optionNumber] = "UseExistingWSL"
-            $optionNumber++
-        } else {
-            Write-Host "  $optionNumber. 🐧 Configurar WSL (instalar distribución)" -ForegroundColor Green
-            $options[$optionNumber] = "ConfigureWSL"
-            $optionNumber++
-        }
-
-        if (-not $WSLCompatibility.WSL2Available) {
-            Write-Host "     ⚠️  Limitado a WSL1 en esta edición de Windows" -ForegroundColor Yellow
-        }
-    } elseif ($WSLCompatibility.Compatible -and -not $IsAdmin) {
-        Write-Host "  $optionNumber. 🐧 Instalar WSL (requiere ejecutar como administrador)" -ForegroundColor Gray
-        $options[$optionNumber] = "RequireAdmin"
-        $optionNumber++
-    }
-
-    Write-Host "  $optionNumber. 🪟 Configuración solo para Windows (sin WSL)" -ForegroundColor Blue
-    $options[$optionNumber] = "WindowsNative"
-    $optionNumber++
-
-    Write-Host "  $optionNumber. ❌ Cancelar" -ForegroundColor Red
-    $options[$optionNumber] = "Cancel"
-
+    Write-Host "¿Quieres instalar WSL?" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "Opción (1-$optionNumber): " -ForegroundColor Yellow -NoNewline
+    Write-Host "1. Si, instalar WSL" -ForegroundColor Green
+    Write-Host "2. No, continuar con configuracion normal de Windows" -ForegroundColor Blue
+    Write-Host ""
+    Write-Host "Opcion (1-2): " -ForegroundColor Yellow -NoNewline
 
     do {
         $choice = Read-Host
-        $choiceNum = 0
-        if ([int]::TryParse($choice, [ref]$choiceNum) -and $options.ContainsKey($choiceNum)) {
-            return $options[$choiceNum]
+        switch ($choice) {
+            "1" { return "InstallWSL" }
+            "2" { return "WindowsNative" }
+            default { 
+                Write-Host "Opcion invalida. Intenta nuevamente (1-2): " -ForegroundColor Red -NoNewline
+            }
         }
-        Write-Host "Opción inválida. Intenta nuevamente (1-$optionNumber): " -ForegroundColor Red -NoNewline
     } while ($true)
 }
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 🚀 FUNCIONES DE EJECUCIÓN
-# ═══════════════════════════════════════════════════════════════════════════════
+function Get-TerminalConfigurationChoice {
+    Write-Host "WSL esta instalado en tu sistema." -ForegroundColor Green
+    Write-Host ""
+    Write-Host "¿Quieres configurar el terminal y herramientas de desarrollo?" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "1. Si, configurar terminal completo" -ForegroundColor Green
+    Write-Host "2. No, continuar con configuracion normal de Windows" -ForegroundColor Blue
+    Write-Host ""
+    Write-Host "Opcion (1-2): " -ForegroundColor Yellow -NoNewline
 
-function Invoke-WSLInstallation {
-    param([bool]$ConfigureTerminal = $false)
-
-    Show-Step "Iniciando instalación de WSL..."
-
-    # Verificar si existe el script de instalación WSL
-    $wslInstallerPath = Join-Path $PSScriptRoot "scripts\wsl-installer.ps1"
-
-    if (Test-Path $wslInstallerPath) {
-        Show-Info "Ejecutando script de instalación WSL..."
-        if ($ConfigureTerminal) {
-            & $wslInstallerPath -ConfigureTerminal
-        } else {
-            & $wslInstallerPath
-        }
-    } else {
-        Show-Error "Script de instalación WSL no encontrado: $wslInstallerPath"
-        Show-Info "Instalando WSL manualmente..."
-
-        try {
-            # Habilitar WSL
-            Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart
-
-            # Intentar habilitar WSL2 (si está disponible)
-            try {
-                Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -NoRestart
-                Show-Success "WSL2 habilitado"
-            } catch {
-                Show-Warning "WSL2 no disponible, usando WSL1"
+    do {
+        $choice = Read-Host
+        switch ($choice) {
+            "1" { return "ConfigureTerminal" }
+            "2" { return "WindowsNative" }
+            default { 
+                Write-Host "Opcion invalida. Intenta nuevamente (1-2): " -ForegroundColor Red -NoNewline
             }
+        }
+    } while ($true)
+}
 
-            # Instalar distribución por defecto
-            Show-Info "Instalando Ubuntu..."
-            & wsl --install -d Ubuntu
+# Funciones de Ejecucion
+function Invoke-WSLInstallation {
+    Show-Step "Iniciando instalacion de WSL..."
 
-            Show-Success "WSL instalado correctamente"
-            Show-Warning "Reinicio requerido para completar la instalación"
+    try {
+        Show-Info "Instalando WSL con Ubuntu..."
+        & wsl --install -d Ubuntu
 
+        Show-Success "WSL instalado correctamente"
+        Show-Warning "Es necesario reiniciar el sistema para completar la instalacion"
+        Show-Info "Despues del reinicio, ejecuta este script nuevamente para continuar"
+        
+        Write-Host ""
+        Write-Host "¿Quieres reiniciar ahora? (y/n): " -ForegroundColor Yellow -NoNewline
+        $restart = Read-Host
+        
+        if ($restart -eq "y" -or $restart -eq "Y") {
+            Show-Info "Reiniciando sistema..."
+            Restart-Computer -Force
+        }
+        
+        return $true
+    } catch {
+        Show-Error "Error durante la instalacion de WSL: $_"
+        
+        Show-Info "Intentando metodo alternativo..."
+        try {
+            Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart
+            Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -NoRestart
+            
+            Show-Success "WSL habilitado correctamente"
+            Show-Warning "Reinicio requerido para completar la instalacion"
+            
+            return $true
         } catch {
-            Show-Error "Error durante la instalación manual de WSL: $_"
+            Show-Error "Error durante la instalacion alternativa de WSL: $_"
             return $false
         }
     }
-
-    return $true
 }
 
-function Invoke-WSLConfiguration {
-    Show-Step "Configurando WSL existente..."
+function Get-PostWSLInstallChoice {
+    Write-Host ""
+    Write-Host "WSL ha sido instalado exitosamente." -ForegroundColor Green
+    Write-Host ""
+    Write-Host "¿Quieres configurar VS Code y el terminal ahora?" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "1. Si, configurar VS Code y terminal" -ForegroundColor Green
+    Write-Host "2. No, finalizar instalacion" -ForegroundColor Blue
+    Write-Host ""
+    Write-Host "Opcion (1-2): " -ForegroundColor Yellow -NoNewline
 
-    # Cambiar al directorio del script para ejecutar install.sh
-    $currentDir = Get-Location
-    $scriptDir = $PSScriptRoot
+    do {
+        $choice = Read-Host
+        switch ($choice) {
+            "1" { return "ConfigureAll" }
+            "2" { return "Finish" }
+            default { 
+                Write-Host "Opcion invalida. Intenta nuevamente (1-2): " -ForegroundColor Red -NoNewline
+            }
+        }
+    } while ($true)
+}
 
-    Show-Info "Ejecutando configuración principal en WSL..."
+function Invoke-TerminalConfiguration {
+    Show-Step "Configurando terminal y herramientas de desarrollo..."
 
     try {
-        # Convertir ruta de Windows a formato WSL de forma robusta
+        & wsl --list --verbose 2>$null | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            Show-Error "WSL no esta funcionando correctamente"
+            return $false
+        }
+    } catch {
+        Show-Error "WSL no esta disponible"
+        return $false
+    }
+
+    $scriptDir = $PSScriptRoot
+    Show-Info "Ejecutando configuracion de terminal en WSL..."
+
+    try {
         $wslPath = (wsl.exe wslpath -a $scriptDir).Trim()
+        
+        Show-Info "Ejecutando: wsl bash -c 'cd $wslPath ; ./install.sh'"
+        & wsl bash -c "cd '$wslPath' ; ./install.sh"
 
-        # Ejecutar install.sh en WSL
-        & wsl bash -c "cd '$wslPath' && ./install.sh --auto"
-
-        Show-Success "Configuración WSL completada"
+        Show-Success "Configuracion de terminal completada"
         return $true
     } catch {
-        Show-Error "Error durante la configuración WSL: $_"
+        Show-Error "Error durante la configuracion del terminal: $_"
         return $false
     }
 }
 
 function Invoke-WindowsNativeSetup {
-    Show-Step "Iniciando configuración para Windows nativo..."
+    Show-Step "Iniciando configuracion para Windows nativo..."
 
-    # Verificar que install.ps1 existe
     $installPath = Join-Path $PSScriptRoot "install.ps1"
 
     if (Test-Path $installPath) {
         Show-Info "Ejecutando install.ps1..."
         & $installPath
-        Show-Success "Configuración Windows completada"
+        Show-Success "Configuracion Windows completada"
         return $true
     } else {
         Show-Error "Script install.ps1 no encontrado: $installPath"
@@ -400,28 +304,15 @@ function Invoke-WindowsNativeSetup {
     }
 }
 
-function Request-AdminRestart {
-    Show-Warning "Esta operación requiere permisos de administrador"
-    Show-Info "Reiniciando script como administrador..."
-
-    $currentScript = $MyInvocation.MyCommand.Path
-    Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -File `"$currentScript`"" -Verb RunAs
-    exit
-}
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# 🎯 FUNCIÓN PRINCIPAL
-# ═══════════════════════════════════════════════════════════════════════════════
-
+# Funcion Principal
 function Main {
     Show-Banner
 
-    # Detectar información del sistema
-    Show-Step "Detectando configuración del sistema..."
+    Show-Step "Detectando configuracion del sistema..."
 
     $windowsInfo = Get-WindowsInfo
     if (-not $windowsInfo) {
-        Show-Error "No se pudo detectar la información del sistema"
+        Show-Error "No se pudo detectar la informacion del sistema"
         Read-Host "Presiona Enter para salir"
         exit 1
     }
@@ -430,65 +321,100 @@ function Main {
     $wslStatus = Get-WSLStatus
     $isAdmin = Test-AdminPrivileges
 
-    # Mostrar información del sistema
     Show-SystemInfo -WindowsInfo $windowsInfo -WSLCompatibility $wslCompatibility -WSLStatus $wslStatus -IsAdmin $isAdmin
 
-    # Mostrar menú y obtener elección
-    $userChoice = Show-MainMenu -WSLCompatibility $wslCompatibility -WSLStatus $wslStatus -IsAdmin $isAdmin
+    if (-not $isAdmin) {
+        Show-Warning "Este script requiere permisos de administrador para instalar WSL"
+        Show-Info "Reiniciando como administrador..."
+        
+        $currentScript = $MyInvocation.MyCommand.Path
+        Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -File `"$currentScript`"" -Verb RunAs
+        exit
+    }
 
-    Write-Host ""
-    Show-Step "Procesando opción seleccionada..."
+    if (-not $wslCompatibility.Compatible) {
+        Show-Error "WSL no es compatible con este sistema: $($wslCompatibility.Reason)"
+        Show-Info "Ejecutando configuracion solo para Windows..."
+        Invoke-WindowsNativeSetup
+        exit
+    }
 
-    # Ejecutar según la elección
-    switch ($userChoice) {
-        "InstallWSLFull" {
-            $success = Invoke-WSLInstallation -ConfigureTerminal $true
+    if (-not $wslStatus.Installed) {
+        $userChoice = Get-WSLInstallationChoice
+        
+        if ($userChoice -eq "InstallWSL") {
+            Show-Step "Instalando WSL..."
+            $success = Invoke-WSLInstallation
             if ($success) {
-                Show-Info "Ejecutando configuración completa..."
-                Invoke-WSLConfiguration
+                # Después de instalar WSL, preguntar si quiere configurar VS Code y terminal
+                $postInstallChoice = Get-PostWSLInstallChoice
+                
+                if ($postInstallChoice -eq "ConfigureAll") {
+                    Show-Step "Configurando VS Code y terminal..."
+                    $configSuccess = Invoke-TerminalConfiguration
+                    if (-not $configSuccess) {
+                        Show-Error "Error al configurar terminal"
+                    }
+                } else {
+                    Show-Info "Instalacion completada. WSL esta listo para usar."
+                }
+            } else {
+                Show-Error "Error al instalar WSL, continuando con configuracion de Windows"
+                Invoke-WindowsNativeSetup
             }
-        }
-        "InstallWSLBasic" {
-            $success = Invoke-WSLInstallation -ConfigureTerminal $false
-            if ($success) {
-                Show-Info "Ejecutando configuración básica..."
-                Invoke-WSLConfiguration
-            }
-        }
-        "UseExistingWSL" {
-            Invoke-WSLConfiguration
-        }
-        "ConfigureWSL" {
-            Show-Info "Configurando WSL existente..."
-            Invoke-WSLConfiguration
-        }
-        "WindowsNative" {
+        } else {
+            Show-Info "Continuando con configuracion de Windows..."
             Invoke-WindowsNativeSetup
         }
-        "RequireAdmin" {
-            Request-AdminRestart
+    } elseif ($wslStatus.HasDistributions) {
+        $userChoice = Get-TerminalConfigurationChoice
+        
+        if ($userChoice -eq "ConfigureTerminal") {
+            Show-Step "Configurando terminal..."
+            $success = Invoke-TerminalConfiguration
+            if (-not $success) {
+                Show-Error "Error al configurar terminal, continuando con configuracion de Windows"
+                Invoke-WindowsNativeSetup
+            }
+        } else {
+            Show-Info "Continuando con configuracion de Windows..."
+            Invoke-WindowsNativeSetup
         }
-        "Cancel" {
-            Show-Info "Operación cancelada por el usuario"
-            exit 0
-        }
-        default {
-            Show-Error "Opción no reconocida: $userChoice"
-            exit 1
+    } else {
+        Show-Info "WSL esta instalado pero no tiene distribuciones"
+        Show-Info "Instalando Ubuntu..."
+        
+        try {
+            & wsl --install -d Ubuntu
+            Show-Success "Ubuntu instalado correctamente"
+            Show-Warning "Reinicio puede ser necesario"
+            
+            # Después de instalar Ubuntu, preguntar si quiere configurar VS Code y terminal
+            $postInstallChoice = Get-PostWSLInstallChoice
+            
+            if ($postInstallChoice -eq "ConfigureAll") {
+                Show-Step "Configurando VS Code y terminal..."
+                $configSuccess = Invoke-TerminalConfiguration
+                if (-not $configSuccess) {
+                    Show-Error "Error al configurar terminal"
+                }
+            } else {
+                Show-Info "Instalacion completada. WSL esta listo para usar."
+            }
+        } catch {
+            Show-Error "Error al instalar Ubuntu: $_"
+            Show-Info "Continuando con configuracion de Windows..."
+            Invoke-WindowsNativeSetup
         }
     }
 
     Write-Host ""
-    Show-Success "🎉 Configuración completada!"
+    Show-Success "Configuracion completada!"
     Show-Info "Presiona Enter para salir..."
     Read-Host
 }
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 🚀 PUNTO DE ENTRADA
-# ═══════════════════════════════════════════════════════════════════════════════
-
-# Ejecutar función principal
+# Ejecutar funcion principal
 try {
     Main
 } catch {
