@@ -67,7 +67,7 @@ function Show-Info {
 function Show-Step {
     param([string]$Message)
     Write-Host "🔧 $Message" -ForegroundColor Magenta
-}
+} # Missing closing brace was here
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 🔍 FUNCIONES DE DETECCIÓN DEL SISTEMA
