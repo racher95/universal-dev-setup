@@ -442,7 +442,7 @@ install_additional_tools() {
         "apt")
             show_info "Instalando herramientas adicionales (apt)..."
             sudo apt install -y \
-                exa \
+                eza \
                 bat \
                 fd-find \
                 fzf \
@@ -461,7 +461,7 @@ install_additional_tools() {
         "brew")
             show_info "Instalando herramientas adicionales (brew)..."
             brew install \
-                exa \
+                eza \
                 bat \
                 fd \
                 fzf \

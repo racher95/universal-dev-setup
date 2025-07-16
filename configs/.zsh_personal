@@ -20,7 +20,7 @@ alias myip='curl ifconfig.me'
 
 # --- Herramientas (con dependencias) ---
 alias find='fd'
-alias ls='exa --icons'
+alias ls='eza --icons'
 
 # --- Git ---
 alias gs='git status'
