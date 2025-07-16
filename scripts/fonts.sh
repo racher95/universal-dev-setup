@@ -119,16 +119,16 @@ install_font_meslo_nerd() {
 install_font_source_code_pro() {
     if [[ ! -f "$FONT_DIR/SourceCodePro-Regular.ttf" ]]; then
         show_info "Instalando Source Code Pro..."
-        
+
         # Descargar archivo ZIP
         if wget -q https://github.com/adobe-fonts/source-code-pro/releases/download/2.038R-ro%2F1.058R-it%2F1.018R-VAR/TTF-source-code-pro-2.038R-ro-1.058R-it.zip; then
-            
+
             # Descomprimir archivo
             if unzip -q TTF-source-code-pro-2.038R-ro-1.058R-it.zip; then
-                
+
                 # Verificar estructura del archivo descomprimido y copiar fuentes
                 local ttf_copied=false
-                
+
                 if [[ -d "TTF" ]] && [[ -n "$(ls TTF/*.ttf 2>/dev/null)" ]]; then
                     sudo cp TTF/*.ttf "$FONT_DIR/"
                     rm -rf TTF/
@@ -151,10 +151,10 @@ install_font_source_code_pro() {
                         rm -f *.ttf
                     fi
                 fi
-                
+
                 # Limpiar archivo ZIP
                 rm -f TTF-source-code-pro-2.038R-ro-1.058R-it.zip
-                
+
                 if [[ "$ttf_copied" == true ]]; then
                     show_success "Source Code Pro instalado correctamente"
                 else
