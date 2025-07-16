@@ -386,26 +386,18 @@ validate_plugin_sync() {
         done
     fi
 
-    # Obtener plugins en .zshrc usando comandos específicos por sistema
+    # Obtener plugins en .zshrc usando método universal compatible
     if [[ -f "$zshrc_file" ]]; then
-        local plugins_section=""
+        # Extraer la sección de plugins usando sed (compatible con macOS y Linux)
+        local plugins_section=$(sed -n '/plugins=(/,/)/p' "$zshrc_file" | sed '1d;$d')
 
-        # Comandos separados por sistema operativo
-        if [[ "$SYSTEM" == "macOS" ]]; then
-            # macOS (BSD) - usar awk para extraer plugins
-            plugins_section=$(awk '/plugins=\(/,/\)/' "$zshrc_file" | sed '1d;$d')
-        else
-            # Linux/WSL (GNU) - usar sed con head/tail que funciona en GNU
-            plugins_section=$(sed -n '/plugins=(/,/)/p' "$zshrc_file" | sed '1d;$d')
-        fi
-
+        # Procesar cada línea para obtener los nombres de los plugins
         if [[ -n "$plugins_section" ]]; then
-            # Procesar cada línea
-            while IFS= read -r line; do
-                # Limpiar espacios y comentarios
-                line=$(echo "$line" | sed 's/#.*//g' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
-                if [[ -n "$line" ]]; then
-                    plugins_in_zshrc+=("$line")
+            while IFS= read -r plugin_line; do
+                # Limpiar y extraer el nombre del plugin
+                local plugin=$(echo "$plugin_line" | sed 's/[[:space:]()"]//g' | sed 's/#.*//g' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+                if [[ -n "$plugin" ]]; then
+                    plugins_in_zshrc+=("$plugin")
                 fi
             done <<< "$plugins_section"
         fi
