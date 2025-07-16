@@ -91,11 +91,25 @@ fi
 # Ejecuta el script épico híbrido ARGOS al iniciar la terminal
 ARGOS_SCRIPT="$HOME/.local/bin/argos-fetch"
 if [[ -x "$ARGOS_SCRIPT" ]]; then
+    # Solo ejecutar en terminales interactivas y si no se ha mostrado antes
     if [[ $- == *i* ]] && [[ -z $ARGOS_SHOWN ]]; then
         # Marcar que ya se mostró para evitar bucles
         export ARGOS_SHOWN=1
-        # Ejecutar directamente
-        "$ARGOS_SCRIPT"
+        # Ejecutar con timeout para evitar cuelgues (usar gtimeout en macOS)
+        if command -v gtimeout &> /dev/null; then
+            gtimeout 10s "$ARGOS_SCRIPT" 2>/dev/null || {
+                echo "⚠️  ARGOS script timeout o error - continuando..."
+            }
+        elif command -v timeout &> /dev/null; then
+            timeout 10s "$ARGOS_SCRIPT" 2>/dev/null || {
+                echo "⚠️  ARGOS script timeout o error - continuando..."
+            }
+        else
+            # Sin timeout disponible, ejecutar directamente
+            "$ARGOS_SCRIPT" 2>/dev/null || {
+                echo "⚠️  ARGOS script error - continuando..."
+            }
+        fi
     fi
 fi
 

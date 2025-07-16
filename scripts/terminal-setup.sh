@@ -187,7 +187,7 @@ install_dependencies() {
             brew update
 
             show_info "Instalando dependencias..."
-            brew install zsh git curl wget
+            brew install zsh git curl wget coreutils
             ;;
         "dnf")
             show_info "Instalando dependencias con dnf..."
@@ -386,42 +386,28 @@ validate_plugin_sync() {
         done
     fi
 
-    # Obtener plugins en .zshrc usando método universal compatible
+    # Obtener plugins en .zshrc (versión compatible con macOS y Linux)
     if [[ -f "$zshrc_file" ]]; then
-        # Extraer la sección de plugins usando sed (compatible con macOS y Linux)
-        local plugins_section=$(sed -n '/plugins=(/,/)/p' "$zshrc_file" | sed '1d;$d')
-
-        # Procesar cada línea para obtener los nombres de los plugins
-        if [[ -n "$plugins_section" ]]; then
-            while IFS= read -r plugin_line; do
-                # Limpiar y extraer el nombre del plugin
-                local plugin=$(echo "$plugin_line" | sed 's/[[:space:]()"]//g' | sed 's/#.*//g' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
-                if [[ -n "$plugin" ]]; then
-                    plugins_in_zshrc+=("$plugin")
-                fi
-            done <<< "$plugins_section"
-        fi
+        # Usar awk para extraer plugins entre plugins=( y ) - compatible con BSD y GNU
+        local plugins_block=$(awk '/^plugins=\(/,/\)/ {if ($0 !~ /^plugins=\(/ && $0 !~ /^\)/) print $0}' "$zshrc_file")
+        while IFS= read -r line; do
+            # Limpiar línea (quitar espacios y comentarios)
+            local plugin=$(echo "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/#.*//')
+            if [[ -n "$plugin" ]]; then
+                plugins_in_zshrc+=("$plugin")
+            fi
+        done <<< "$plugins_block"
     fi
 
     # Validar sincronización solo si hay plugins instalados
     local missing_plugins=()
-    if [[ ${#plugins_installed[@]} -gt 0 ]]; then
-        for plugin in "${plugins_installed[@]}"; do
-            local found=false
-            # Solo verificar si hay plugins en zshrc
-            if [[ ${#plugins_in_zshrc[@]} -gt 0 ]]; then
-                for zshrc_plugin in "${plugins_in_zshrc[@]}"; do
-                    if [[ "$plugin" == "$zshrc_plugin" ]]; then
-                        found=true
-                        break
-                    fi
-                done
-            fi
-            if [[ "$found" == false ]]; then
-                missing_plugins+=("$plugin")
-            fi
-        done
-    fi
+    for plugin in "${plugins_installed[@]}"; do
+        if [[ ${#plugins_in_zshrc[@]} -gt 0 && ! " ${plugins_in_zshrc[@]} " =~ " ${plugin} " ]]; then
+            missing_plugins+=("$plugin")
+        elif [[ ${#plugins_in_zshrc[@]} -eq 0 ]]; then
+            missing_plugins+=("$plugin")
+        fi
+    done
 
     # Mostrar resultados
     if [[ ${#missing_plugins[@]} -gt 0 ]]; then
@@ -511,7 +497,8 @@ install_additional_tools() {
                 fzf \
                 ripgrep \
                 autojump \
-                thefuck
+                thefuck \
+                coreutils
             ;;
     esac
 
@@ -772,8 +759,21 @@ validate_complete_installation() {
         validation_errors+=("ARGOS no está instalado")
     fi
 
-    if [[ ! -f "$HOME/.local/share/argos/Argos-FetchWU.png" ]]; then
+    # Verificar imagen ARGOS según el sistema
+    local argos_image=""
+    if [[ "$SYSTEM" == "macOS" ]]; then
+        argos_image="$HOME/.local/share/argos/loboMacOS.png"
+    else
+        argos_image="$HOME/.local/share/argos/Argos-FetchWU.png"
+    fi
+
+    if [[ ! -f "$argos_image" ]]; then
         validation_errors+=("Imagen ARGOS no está instalada")
+    fi
+
+    # Verificar imagen genérica para el script portable
+    if [[ ! -f "$HOME/.local/share/argos/argos-image.png" ]]; then
+        validation_errors+=("Imagen genérica ARGOS no está instalada")
     fi
 
     # Verificar chafa (solo si es necesario según el terminal)

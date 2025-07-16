@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🐺 ARGOS FETCH - VERSIÓN SIMPLE Y ESTABLE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Configuración de rutas portables
+ARGOS_IMAGE_PATH="$HOME/.local/share/argos/argos-image.png"
+ARGOS_IMAGE_FALLBACK="$HOME/.config/argos/argos-image.png"
+
+# Verificar que la imagen exista
+ARGOS_IMAGE=""
+if [[ -f "$ARGOS_IMAGE_PATH" ]]; then
+    ARGOS_IMAGE="$ARGOS_IMAGE_PATH"
+elif [[ -f "$ARGOS_IMAGE_FALLBACK" ]]; then
+    ARGOS_IMAGE="$ARGOS_IMAGE_FALLBACK"
+else
+    echo "⚠️  Imagen ARGOS no encontrada"
+    exit 1
+fi
+
+# Verificar chafa
+if ! command -v chafa &> /dev/null; then
+    echo "⚠️  chafa no encontrado. Instalar con: brew install chafa"
+    exit 1
+fi
+
+# Limpiar pantalla
+clear
+
+# Obtener información del sistema
+USERNAME=$(whoami)
+HOSTNAME=$(hostname)
+OS=$(uname -s)
+KERNEL=$(uname -r)
+CURRENT_DIR=$(pwd)
+
+echo ""
+echo ""
+
+# Mostrar imagen con chafa
+echo "🐺 ARGOS WOLF SYSTEM 🐺"
+echo ""
+
+if [[ "$TERM_PROGRAM" == "iTerm.app" ]]; then
+    chafa --symbols=block --size="18x12" "$ARGOS_IMAGE"
+else
+    chafa --symbols=block --size="25x12" "$ARGOS_IMAGE"
+fi
+
+echo ""
+echo "   👤 Usuario: $USERNAME@$HOSTNAME"
+echo "   🖥️  Sistema: $OS"
+echo "   🔧 Kernel: $KERNEL"
+echo "   📂 Directorio: $CURRENT_DIR"
+echo ""
+echo ""
