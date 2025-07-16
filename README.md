@@ -32,7 +32,7 @@ Un script inteligente que detecta automáticamente tu sistema operativo y config
 
 ```powershell
 # PowerShell como administrador - ¡Un solo comando!
-git clone https://github.com/tu-usuario/universal-dev-setup.git
+git clone https://github.com/racher95/universal-dev-setup.git
 cd universal-dev-setup
 .\install.ps1
 ```
@@ -50,7 +50,7 @@ cd universal-dev-setup
 
 ```bash
 # Git Bash como administrador
-git clone https://github.com/tu-usuario/universal-dev-setup.git
+git clone https://github.com/racher95/universal-dev-setup.git
 cd universal-dev-setup
 ./install.sh
 ```

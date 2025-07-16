@@ -44,6 +44,7 @@ alias updaten='ncu -u && npm install'
 # Alias para ejecutar ARGOS fácilmente
 alias argos="$HOME/.local/bin/argos-fetch"
 alias argos-fetch="$HOME/.local/bin/argos-fetch"
+alias fetch="$HOME/.local/bin/argos-fetch"
 
 # --- Scripts de Configuración Universal ---
 alias setup-dev='bash /tmp/universal_dev_setup.sh'

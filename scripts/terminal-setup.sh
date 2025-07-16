@@ -441,8 +441,9 @@ install_additional_tools() {
     case "$PACKAGE_MANAGER" in
         "apt")
             show_info "Instalando herramientas adicionales (apt)..."
+            
+            # Instalar herramientas disponibles en apt
             sudo apt install -y \
-                eza \
                 bat \
                 fd-find \
                 fzf \
@@ -453,6 +454,19 @@ install_additional_tools() {
             # Crear enlaces simbólicos para compatibilidad
             sudo ln -sf /usr/bin/batcat /usr/local/bin/bat 2>/dev/null || true
             sudo ln -sf /usr/bin/fdfind /usr/local/bin/fd 2>/dev/null || true
+
+            # Instalar eza manualmente desde GitHub
+            show_info "Instalando eza desde GitHub..."
+            if ! command -v eza &> /dev/null; then
+                EZA_VERSION=$(curl -s https://api.github.com/repos/eza-community/eza/releases/latest | grep -Po '"tag_name": "v\K[^"]*')
+                wget -O /tmp/eza.tar.gz "https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz"
+                sudo tar -xzf /tmp/eza.tar.gz -C /usr/local/bin/
+                sudo chmod +x /usr/local/bin/eza
+                rm /tmp/eza.tar.gz
+                show_success "eza instalado correctamente"
+            else
+                show_info "eza ya está instalado"
+            fi
 
             # Instalar thefuck via pip
             pip3 install --user thefuck

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script épico minimalista: Imagen del lobo + ARGOS ASCII
-# Diseño limpio y elegante
+# Diseño limpio y elegante con mejor alineación
 
 # Limpiar pantalla completamente
 clear
@@ -12,23 +12,34 @@ clear
 declare -a wolf_lines
 declare -a argos_lines
 
-# Capturar la imagen del lobo (tamaño más pequeño para mejor alineación)
-mapfile -t wolf_lines < <(chafa --symbols=block --size=30x18 /home/kevin/Pictures/Argos-FetchWU.png)
+# Detectar el directorio del script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# ASCII art de ARGOS (más compacto)
+# Determinar la imagen a usar según el sistema operativo
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    IMAGE_PATH="$SCRIPT_DIR/loboMacOS.png"
+else
+    # WSL/Linux
+    IMAGE_PATH="$SCRIPT_DIR/Argos-FetchWU.png"
+fi
+
+# Capturar la imagen del lobo (tamaño optimizado para mejor alineación)
+mapfile -t wolf_lines < <(chafa --symbols=block --size=28x16 "$IMAGE_PATH")
+
+# ASCII art de ARGOS (más compacto y centrado)
 argos_lines=(
-"    ██████╗ ██████╗  ██████╗  ██████╗ ███████╗"
-"   ██╔══██╗██╔══██╗██╔════╝ ██╔═══██╗██╔════╝"
-"   ███████║██████╔╝██║  ███╗██║   ██║███████╗"
-"   ██╔══██║██╔══██╗██║   ██║██║   ██║╚════██║"
-"   ██║  ██║██║  ██║╚██████╔╝╚██████╔╝███████║"
-"   ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚══════╝"
-"                                               "
-"        🐺 W O L F   S Y S T E M 🐺        "
+"  ██████╗ ██████╗  ██████╗  ██████╗ ███████╗"
+" ██╔══██╗██╔══██╗██╔════╝ ██╔═══██╗██╔════╝"
+" ███████║██████╔╝██║  ███╗██║   ██║███████╗"
+" ██╔══██║██╔══██╗██║   ██║██║   ██║╚════██║"
+" ██║  ██║██║  ██║╚██████╔╝╚██████╔╝███████║"
+" ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚══════╝"
+"                                            "
+"       🐺 W O L F   S Y S T E M 🐺       "
 )
 
 # Mostrar la imagen del lobo al lado del texto ARGOS (centrado verticalmente)
-echo ""
 echo ""
 
 # Calcular líneas para centrar el texto
@@ -38,7 +49,7 @@ argos_lines_count=${#argos_lines[@]}
 # Calcular el offset para centrar ARGOS verticalmente
 offset=$(( (wolf_lines_count - argos_lines_count) / 2 ))
 
-# Mostrar las líneas combinadas
+# Mostrar las líneas combinadas con mejor espaciado
 for ((i=0; i<wolf_lines_count; i++)); do
     wolf_line="${wolf_lines[$i]:-}"
 
@@ -51,9 +62,8 @@ for ((i=0; i<wolf_lines_count; i++)); do
         argos_line=""
     fi
 
-    # Mostrar línea combinada
-    printf "%-35s  %s\n" "$wolf_line" "$argos_line"
+    # Mostrar línea combinada con mejor espaciado horizontal
+    printf "%-32s   %s\n" "$wolf_line" "$argos_line"
 done
 
-echo ""
 echo ""
