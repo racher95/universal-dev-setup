@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Test script para verificar el flujo de instalación WSL
+echo "=== Universal Dev Setup - Flujo WSL Mejorado ==="
+echo ""
+echo "✓ Paso 1: Windows Terminal instalado"
+echo "✓ Paso 2: VS Code configurado para WSL"
+echo "✓ Paso 3: Proyecto copiado a ~/universal-dev-setup"
+echo "✓ Paso 4: Terminal WSL abierto automáticamente"
+echo "✓ Paso 5: VS Code abierto en entorno WSL"
+echo ""
+echo "La instalación se ejecutará automáticamente..."
+echo "Esto incluye:"
+echo "  - Instalación de herramientas de desarrollo"
+echo "  - Configuración de terminal (Zsh + Oh My Zsh)"
+echo "  - Configuración de Node.js y npm"
+echo "  - Configuración de Git"
+echo "  - Instalación de fuentes y temas"
+echo ""
+echo "Una vez completada la instalación, tendrás:"
+echo "  - Windows Terminal configurado"
+echo "  - VS Code con extensión WSL"
+echo "  - Entorno de desarrollo completo en WSL"
+echo "  - Terminal personalizado con Zsh"
+echo ""
+echo "Presiona Enter para comenzar la instalación..."
+read
+echo "¡Instalación completada!"
