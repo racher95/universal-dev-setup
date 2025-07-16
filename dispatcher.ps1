@@ -2,7 +2,8 @@
 # DISPATCHER UNIVERSAL - Windows Development Setup
 # Despachador inteligente para configuracion de desarrollo
 
-$ErrorActionPreference = "Stop"
+# Configurar el manejo de errores de forma mas permisiva para evitar que el script se cierre abruptamente
+$ErrorActionPreference = "Continue"
 $ProgressPreference = "SilentlyContinue"
 
 # Funciones de Display
@@ -44,7 +45,7 @@ function Get-WindowsInfo {
     try {
         Show-Step "Obteniendo informacion del sistema..."
         $os = Get-CimInstance -ClassName Win32_OperatingSystem
-        
+
         return @{
             Version = $os.Version
             Build = $os.BuildNumber
@@ -152,7 +153,7 @@ function Show-SystemInfo {
 function Get-WSLInstallationChoice {
     Write-Host "WSL no esta instalado en tu sistema." -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "¿Quieres instalar WSL?" -ForegroundColor Cyan
+    Write-Host "Quieres instalar WSL?" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "1. Si, instalar WSL" -ForegroundColor Green
     Write-Host "2. No, continuar con configuracion normal de Windows" -ForegroundColor Blue
@@ -164,7 +165,7 @@ function Get-WSLInstallationChoice {
         switch ($choice) {
             "1" { return "InstallWSL" }
             "2" { return "WindowsNative" }
-            default { 
+            default {
                 Write-Host "Opcion invalida. Intenta nuevamente (1-2): " -ForegroundColor Red -NoNewline
             }
         }
@@ -174,9 +175,14 @@ function Get-WSLInstallationChoice {
 function Get-TerminalConfigurationChoice {
     Write-Host "WSL esta instalado en tu sistema." -ForegroundColor Green
     Write-Host ""
-    Write-Host "¿Quieres configurar el terminal y herramientas de desarrollo?" -ForegroundColor Cyan
+    Write-Host "Quieres configurar VS Code y el terminal completo?" -ForegroundColor Cyan
+    Write-Host "Esto incluye:"
+    Write-Host "  - Instalacion y configuracion de VS Code"
+    Write-Host "  - Configuracion completa del terminal (Zsh, Oh My Zsh, Powerlevel10k)"
+    Write-Host "  - Instalacion de fuentes de desarrollo"
+    Write-Host "  - Herramientas de desarrollo y extensiones"
     Write-Host ""
-    Write-Host "1. Si, configurar terminal completo" -ForegroundColor Green
+    Write-Host "1. Si, configurar todo el entorno de desarrollo" -ForegroundColor Green
     Write-Host "2. No, continuar con configuracion normal de Windows" -ForegroundColor Blue
     Write-Host ""
     Write-Host "Opcion (1-2): " -ForegroundColor Yellow -NoNewline
@@ -186,7 +192,7 @@ function Get-TerminalConfigurationChoice {
         switch ($choice) {
             "1" { return "ConfigureTerminal" }
             "2" { return "WindowsNative" }
-            default { 
+            default {
                 Write-Host "Opcion invalida. Intenta nuevamente (1-2): " -ForegroundColor Red -NoNewline
             }
         }
@@ -204,28 +210,28 @@ function Invoke-WSLInstallation {
         Show-Success "WSL instalado correctamente"
         Show-Warning "Es necesario reiniciar el sistema para completar la instalacion"
         Show-Info "Despues del reinicio, ejecuta este script nuevamente para continuar"
-        
+
         Write-Host ""
-        Write-Host "¿Quieres reiniciar ahora? (y/n): " -ForegroundColor Yellow -NoNewline
+        Write-Host "Quieres reiniciar ahora? (y/n): " -ForegroundColor Yellow -NoNewline
         $restart = Read-Host
-        
+
         if ($restart -eq "y" -or $restart -eq "Y") {
             Show-Info "Reiniciando sistema..."
             Restart-Computer -Force
         }
-        
+
         return $true
     } catch {
         Show-Error "Error durante la instalacion de WSL: $_"
-        
+
         Show-Info "Intentando metodo alternativo..."
         try {
             Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart
             Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -NoRestart
-            
+
             Show-Success "WSL habilitado correctamente"
             Show-Warning "Reinicio requerido para completar la instalacion"
-            
+
             return $true
         } catch {
             Show-Error "Error durante la instalacion alternativa de WSL: $_"
@@ -238,7 +244,7 @@ function Get-PostWSLInstallChoice {
     Write-Host ""
     Write-Host "WSL ha sido instalado exitosamente." -ForegroundColor Green
     Write-Host ""
-    Write-Host "¿Quieres configurar VS Code y el terminal ahora?" -ForegroundColor Cyan
+    Write-Host "Quieres configurar VS Code y el terminal ahora?" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "1. Si, configurar VS Code y terminal" -ForegroundColor Green
     Write-Host "2. No, finalizar instalacion" -ForegroundColor Blue
@@ -250,7 +256,7 @@ function Get-PostWSLInstallChoice {
         switch ($choice) {
             "1" { return "ConfigureAll" }
             "2" { return "Finish" }
-            default { 
+            default {
                 Write-Host "Opcion invalida. Intenta nuevamente (1-2): " -ForegroundColor Red -NoNewline
             }
         }
@@ -272,18 +278,175 @@ function Invoke-TerminalConfiguration {
     }
 
     $scriptDir = $PSScriptRoot
-    Show-Info "Ejecutando configuracion de terminal en WSL..."
+    if (-not $scriptDir) {
+        Show-Error "No se pudo determinar el directorio del script."
+        return $false
+    }
+
+    Show-Info "Abriendo terminal de WSL Ubuntu para configuracion completa..."
 
     try {
-        $wslPath = (wsl.exe wslpath -a $scriptDir).Trim()
-        
-        Show-Info "Ejecutando: wsl bash -c 'cd $wslPath ; ./install.sh'"
-        & wsl bash -c "cd '$wslPath' ; ./install.sh"
+        # Obtener la ruta de WSL
+        $wslPath = $null
+        try {
+            $wslPathOutput = & wsl.exe wslpath -a "$scriptDir" 2>$null
+            if ($LASTEXITCODE -eq 0 -and $wslPathOutput) {
+                $wslPath = $wslPathOutput.ToString().Trim()
+                Show-Info "Ruta convertida de WSL: $wslPath"
+            }
+        } catch {
+            Show-Warning "Error al convertir ruta con wslpath: $_"
+        }
 
-        Show-Success "Configuracion de terminal completada"
+        if (-not $wslPath) {
+            # Metodo alternativo: usar la ruta directamente
+            $wslPath = $scriptDir -replace '^([A-Za-z]):', '/mnt/$1' -replace '\\', '/'
+            $wslPath = $wslPath.ToLower()
+            Show-Info "Ruta alternativa de WSL: $wslPath"
+        }
+
+        # Preparar el directorio completo de instalacion
+        Show-Info "Preparando directorio completo de instalacion..."
+
+        # Verificar que el archivo install.sh existe en la ruta de Windows
+        $installShPath = Join-Path $scriptDir "install.sh"
+        if (-not (Test-Path $installShPath)) {
+            Show-Error "Archivo install.sh no encontrado en: $installShPath"
+            return $false
+        }
+
+        # Copiar toda la carpeta universal-dev-setup al directorio WSL
+        Show-Info "Copiando toda la carpeta universal-dev-setup a WSL..."
+        $projectName = "universal-dev-setup"
+
+        # Eliminar directorio existente si existe
+        $removeCommand = "rm -rf ~/$projectName"
+        & wsl bash -c $removeCommand 2>$null
+
+        # Copiar toda la carpeta manteniendo la estructura
+        $copyAllCommand = "cp -r '$wslPath' ~/$projectName"
+        $copyResult = & wsl bash -c $copyAllCommand 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Show-Error "Error al copiar el directorio completo: $copyResult"
+            return $false
+        }
+        Show-Success "Directorio completo copiado correctamente"
+
+        # Verificar que el directorio se copio correctamente
+        $verifyDirCommand = "ls -la ~/$projectName/"
+        $verifyDirResult = & wsl bash -c $verifyDirCommand 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Show-Error "El directorio $projectName no se copio correctamente: $verifyDirResult"
+            return $false
+        }
+        Show-Info "Contenido del directorio copiado:"
+        Show-Info "$verifyDirResult"
+
+        # Convertir terminaciones de linea y asignar permisos
+        Show-Info "Configurando permisos y formato de archivos..."
+        $prepareCommand = "cd ~/$projectName && find . -name '*.sh' -exec sed -i 's/\r$//' {} \; && find . -name '*.sh' -exec chmod +x {} \;"
+        $prepareResult = & wsl bash -c $prepareCommand 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Show-Error "Error al preparar archivos: $prepareResult"
+            return $false
+        }
+        Show-Success "Archivos preparados correctamente"
+
+        Show-Info "Abriendo terminal de WSL Ubuntu..."
+        Show-Info "Se ejecutara install.sh desde el directorio completo del proyecto"
+        Show-Info "Esto instalara VS Code, configurara el terminal y todas las herramientas de desarrollo"
+
+        # Ejecutar directamente el script install.sh en WSL desde el directorio del proyecto
+        try {
+            Show-Info "Ejecutando install.sh en WSL Ubuntu..."
+
+            # Verificar que el directorio y archivo existen antes de ejecutarlo
+            $checkCommand = "cd ~/$projectName && ls -la install.sh"
+            $checkResult = & wsl bash -c $checkCommand 2>&1
+            if ($LASTEXITCODE -ne 0) {
+                Show-Error "El archivo install.sh no esta disponible en el directorio del proyecto: $checkResult"
+                throw "Archivo no encontrado"
+            }
+
+            # Metodo simple: abrir terminal de WSL que se mantenga abierto en el directorio correcto
+            try {
+                Show-Info "Abriendo terminal de WSL Ubuntu en el directorio del proyecto..."
+
+                # Intentar abrir WSL directamente en el directorio del proyecto con ejecucion automatica
+                try {
+                    # Metodo 1: Usar --cd y despues ejecutar el script
+                    Start-Process -FilePath "wsl.exe" -ArgumentList "-d", "Ubuntu", "--cd", "~/universal-dev-setup", "-e", "bash", "-c", "./install.sh --auto; exec bash" -WindowStyle Normal
+                    Show-Success "Terminal de WSL Ubuntu abierta con instalacion automatica"
+                    Show-Info "El script install.sh se ejecutara automaticamente"
+                    Show-Info "Una vez completado, tendras un terminal bash activo"
+                } catch {
+                    Show-Warning "Error con metodo de ejecucion automatica: $_"
+                    Show-Info "Intentando abrir solo en directorio correcto..."
+
+                    # Metodo 1b: Solo abrir en directorio correcto
+                    Start-Process -FilePath "wsl.exe" -ArgumentList "-d", "Ubuntu", "--cd", "~/universal-dev-setup" -WindowStyle Normal
+                    Show-Success "Terminal de WSL Ubuntu abierta en ~/universal-dev-setup"
+                    Show-Info "En la terminal que se acaba de abrir, ejecuta:"
+                    Show-Info "   ./install.sh --auto"
+                }
+            } catch {
+                Show-Warning "Error al abrir terminal con --cd: $_"
+                Show-Info "Intentando metodo alternativo..."
+
+                # Metodo alternativo: usar bash -c para cambiar directorio y ejecutar script
+                try {
+                    Show-Info "Abriendo terminal con ejecucion automatica del script..."
+                    Start-Process -FilePath "wsl.exe" -ArgumentList "-d", "Ubuntu", "bash", "-c", "cd ~/universal-dev-setup && ./install.sh --auto; exec bash" -WindowStyle Normal
+
+                    Show-Success "Terminal de WSL Ubuntu abierta con instalacion automatica"
+                    Show-Info "El script install.sh se ejecutara automaticamente"
+                    Show-Info "Una vez completado, tendras un terminal bash activo en ~/universal-dev-setup"
+                } catch {
+                    Show-Warning "Error con metodo alternativo: $_"
+
+                    # Metodo 3: Usar cmd para ejecutar con ejecucion automatica
+                    try {
+                        Show-Info "Intentando con cmd y ejecucion automatica..."
+                        Start-Process -FilePath "cmd.exe" -ArgumentList "/c", "start", "cmd", "/k", "wsl -d Ubuntu bash -c 'cd ~/universal-dev-setup && ./install.sh --auto; exec bash'"
+                        Show-Success "Terminal WSL abierta con cmd y ejecucion automatica"
+                        Show-Info "El script install.sh se ejecutara automaticamente"
+                    } catch {
+                        Show-Error "Error con cmd: $_"
+                        throw "Fallback a metodo manual"
+                    }
+                }
+            }
+
+        } catch {
+            Show-Warning "Error al abrir terminal con instalacion automatica: $_"
+            Show-Info "Intentando apertura manual de terminal..."
+
+            # Fallback: metodo simple de apertura con ejecucion automatica
+            try {
+                Show-Info "Metodo de respaldo: apertura con ejecucion automatica..."
+                Start-Process -FilePath "wsl.exe" -ArgumentList "-d", "Ubuntu", "bash", "-c", "cd ~/universal-dev-setup && ./install.sh --auto; exec bash"
+                Show-Info "Terminal de WSL Ubuntu abierta con instalacion automatica"
+                Show-Info "El script install.sh se ejecutara automaticamente"
+            } catch {
+                Show-Error "No se pudo abrir terminal de WSL: $_"
+                Show-Info "Como ultimo recurso, abre manualmente una terminal de WSL Ubuntu y ejecuta:"
+                Show-Info "   cd ~/universal-dev-setup"
+                Show-Info "   ./install.sh --auto"
+                return $false
+            }
+        }
+
+        Show-Info "Proyecto completo instalado en WSL"
+        Show-Info "Directorio: ~/universal-dev-setup"
+        Show-Info "La instalacion se ejecutara automaticamente en el terminal de WSL"
+        Show-Info "Espera a que termine la instalacion completa"
+        Show-Info "Una vez completada la instalacion, puedes cerrar esta ventana de PowerShell"
+
         return $true
     } catch {
         Show-Error "Error durante la configuracion del terminal: $_"
+        Show-Info "Continuando con configuracion de Windows nativo como respaldo..."
+        Invoke-WindowsNativeSetup
         return $false
     }
 }
@@ -325,10 +488,27 @@ function Main {
 
     if (-not $isAdmin) {
         Show-Warning "Este script requiere permisos de administrador para instalar WSL"
-        Show-Info "Reiniciando como administrador..."
-        
-        $currentScript = $MyInvocation.MyCommand.Path
-        Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -File `"$currentScript`"" -Verb RunAs
+        Show-Info "Detectamos que no se abrio la ventana con permisos de administrador. Para continuar con la instalacion, debe abrir este programa manualmente con permisos de administrador."
+
+        try {
+            $currentScript = $MyInvocation.MyCommand.Path
+            if (-not $currentScript) {
+                $currentScript = $PSCommandPath
+            }
+            if (-not $currentScript) {
+                $currentScript = $MyInvocation.ScriptName
+            }
+
+            Show-Info "Ruta del script: $currentScript"
+
+            # Usar -File en lugar de -Command para mayor compatibilidad
+            Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-File", "`"$currentScript`"" -Verb RunAs
+            Show-Info "Ventana de administrador abierta correctamente. Este script finalizara ahora."
+        } catch {
+            Show-Error "Error al intentar abrir la ventana con permisos de administrador: $_"
+            Show-Info "Por favor, intente abrir este programa manualmente con permisos de administrador."
+        }
+
         exit
     }
 
@@ -341,14 +521,14 @@ function Main {
 
     if (-not $wslStatus.Installed) {
         $userChoice = Get-WSLInstallationChoice
-        
+
         if ($userChoice -eq "InstallWSL") {
             Show-Step "Instalando WSL..."
             $success = Invoke-WSLInstallation
             if ($success) {
-                # Después de instalar WSL, preguntar si quiere configurar VS Code y terminal
+                # Despues de instalar WSL, preguntar si quiere configurar VS Code y terminal
                 $postInstallChoice = Get-PostWSLInstallChoice
-                
+
                 if ($postInstallChoice -eq "ConfigureAll") {
                     Show-Step "Configurando VS Code y terminal..."
                     $configSuccess = Invoke-TerminalConfiguration
@@ -368,7 +548,7 @@ function Main {
         }
     } elseif ($wslStatus.HasDistributions) {
         $userChoice = Get-TerminalConfigurationChoice
-        
+
         if ($userChoice -eq "ConfigureTerminal") {
             Show-Step "Configurando terminal..."
             $success = Invoke-TerminalConfiguration
@@ -383,15 +563,15 @@ function Main {
     } else {
         Show-Info "WSL esta instalado pero no tiene distribuciones"
         Show-Info "Instalando Ubuntu..."
-        
+
         try {
             & wsl --install -d Ubuntu
             Show-Success "Ubuntu instalado correctamente"
             Show-Warning "Reinicio puede ser necesario"
-            
-            # Después de instalar Ubuntu, preguntar si quiere configurar VS Code y terminal
+
+            # Despues de instalar Ubuntu, preguntar si quiere configurar VS Code y terminal
             $postInstallChoice = Get-PostWSLInstallChoice
-            
+
             if ($postInstallChoice -eq "ConfigureAll") {
                 Show-Step "Configurando VS Code y terminal..."
                 $configSuccess = Invoke-TerminalConfiguration

@@ -3,6 +3,36 @@
 # Módulo de instalación de herramientas npm globales
 # Compatible con macOS, Linux, WSL, Windows
 
+# Función para determinar si se necesita sudo para npm global
+_get_npm_cmd_prefix() {
+    local prefix_dir
+
+    # Obtener el directorio de instalación global de npm
+    prefix_dir=$(npm config get prefix 2>/dev/null)
+
+    # Si no podemos obtener el directorio, no usamos sudo por seguridad
+    if [ -z "$prefix_dir" ]; then
+        echo ""
+        return
+    fi
+
+    # En Windows, sudo no existe - nunca lo usamos
+    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+        echo ""
+        return
+    fi
+
+    # En sistemas Unix (Linux/macOS/WSL), chequear permisos de escritura
+    if [ -w "$prefix_dir" ]; then
+        # El usuario tiene permisos, no se necesita sudo
+        echo ""
+    else
+        # El usuario NO tiene permisos, se necesita sudo
+        # Esto es común en Linux/WSL cuando node se instala con apt
+        echo "sudo"
+    fi
+}
+
 install_npm_tools() {
     show_step "Instalando herramientas npm globales..."
 
@@ -13,9 +43,19 @@ install_npm_tools() {
         return 1
     fi
 
+    # Determinar si necesitamos sudo para los comandos de npm
+    local npm_cmd_prefix=$(_get_npm_cmd_prefix)
+
+    # Mostrar información sobre el método de instalación
+    if [ -n "$npm_cmd_prefix" ]; then
+        show_info "Instalando paquetes npm con privilegios elevados..."
+    else
+        show_info "Instalando paquetes npm con permisos de usuario..."
+    fi
+
     # Actualizar npm a la última versión
     show_info "Actualizando npm..."
-    npm install -g npm@latest
+    ${npm_cmd_prefix} npm install -g npm@latest
 
     # Lista de herramientas globales esenciales
     local tools=(
@@ -72,7 +112,7 @@ install_npm_tools() {
     for tool in "${tools[@]}"; do
         if ! npm list -g "$tool" &> /dev/null; then
             show_info "Instalando $tool..."
-            if npm install -g "$tool" --silent; then
+            if ${npm_cmd_prefix} npm install -g "$tool" --silent; then
                 ((installed++))
             else
                 show_warning "Error instalando $tool"
@@ -113,6 +153,7 @@ install_macos_npm_tools() {
         "battery-level"
     )
 
+    # En macOS no necesitamos sudo normalmente (Homebrew maneja permisos)
     for tool in "${macos_tools[@]}"; do
         if ! npm list -g "$tool" &> /dev/null; then
             show_info "Instalando $tool (macOS)..."
@@ -128,10 +169,13 @@ install_linux_npm_tools() {
         "gtop"
     )
 
+    # Usar la misma lógica de detección de sudo para herramientas específicas
+    local npm_cmd_prefix=$(_get_npm_cmd_prefix)
+
     for tool in "${linux_tools[@]}"; do
         if ! npm list -g "$tool" &> /dev/null; then
             show_info "Instalando $tool (Linux)..."
-            npm install -g "$tool" --silent
+            ${npm_cmd_prefix} npm install -g "$tool" --silent
         fi
     done
 }
@@ -142,6 +186,7 @@ install_windows_npm_tools() {
         "node-gyp"
     )
 
+    # Windows no usa sudo
     for tool in "${windows_tools[@]}"; do
         if ! npm list -g "$tool" &> /dev/null; then
             show_info "Instalando $tool (Windows)..."
@@ -228,8 +273,11 @@ update_npm_tools() {
         npm-check-updates -g
     fi
 
+    # Determinar si necesitamos sudo para los comandos de npm
+    local npm_cmd_prefix=$(_get_npm_cmd_prefix)
+
     # Actualizar npm
-    npm update -g npm
+    ${npm_cmd_prefix} npm update -g npm
 
     # Actualizar herramientas específicas
     local tools_to_update=(
@@ -246,7 +294,7 @@ update_npm_tools() {
     for tool in "${tools_to_update[@]}"; do
         if npm list -g "$tool" &> /dev/null; then
             show_info "Actualizando $tool..."
-            npm update -g "$tool"
+            ${npm_cmd_prefix} npm update -g "$tool"
         fi
     done
 

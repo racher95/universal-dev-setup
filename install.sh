@@ -14,9 +14,12 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
+# Obtener el directorio donde se encuentra el script para rutas robustas
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+
 # Configuración de logging
 TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
-LOG_DIR="logs"
+LOG_DIR="$SCRIPT_DIR/logs"
 LOG_FILE="$LOG_DIR/installation-$TIMESTAMP.log"
 ERROR_LOG="$LOG_DIR/errors-$TIMESTAMP.log"
 
@@ -411,7 +414,7 @@ finalize_logging() {
 configure_terminal() {
     show_step "Configurando terminal (Zsh + Oh My Zsh + Powerlevel10k)..."
 
-    local terminal_script="$(dirname "$0")/scripts/terminal-setup.sh"
+    local terminal_script="$SCRIPT_DIR/scripts/terminal-setup.sh"
 
     if [[ -f "$terminal_script" ]]; then
         echo -e "${BLUE}ℹ️  Ejecutando configuración completa del terminal...${NC}"
@@ -447,11 +450,11 @@ main() {
         show_system_info
 
         # Cargar módulos específicos
-        source "$(dirname "$0")/scripts/dependencies.sh"
-        source "$(dirname "$0")/scripts/fonts.sh"
-        source "$(dirname "$0")/scripts/vscode.sh"
-        source "$(dirname "$0")/scripts/npm-tools.sh"
-        source "$(dirname "$0")/scripts/git-config.sh"
+        source "$SCRIPT_DIR/scripts/dependencies.sh"
+        source "$SCRIPT_DIR/scripts/fonts.sh"
+        source "$SCRIPT_DIR/scripts/vscode.sh"
+        source "$SCRIPT_DIR/scripts/npm-tools.sh"
+        source "$SCRIPT_DIR/scripts/git-config.sh"
 
         # Ejecutar instalación completa automáticamente
         echo -e "${CYAN}🚀 INICIANDO INSTALACIÓN AUTOMÁTICA COMPLETA...${NC}"
@@ -472,11 +475,11 @@ main() {
     show_system_info
 
     # Cargar módulos específicos
-    source "$(dirname "$0")/scripts/dependencies.sh"
-    source "$(dirname "$0")/scripts/fonts.sh"
-    source "$(dirname "$0")/scripts/vscode.sh"
-    source "$(dirname "$0")/scripts/npm-tools.sh"
-    source "$(dirname "$0")/scripts/git-config.sh"
+    source "$SCRIPT_DIR/scripts/dependencies.sh"
+    source "$SCRIPT_DIR/scripts/fonts.sh"
+    source "$SCRIPT_DIR/scripts/vscode.sh"
+    source "$SCRIPT_DIR/scripts/npm-tools.sh"
+    source "$SCRIPT_DIR/scripts/git-config.sh"
 
     # Mostrar menú
     while true; do
@@ -562,14 +565,14 @@ ask_terminal_configuration() {
                 echo -e "${CYAN}🚀 Iniciando configuración del terminal...${NC}"
                 echo ""
                 # Ejecutar directamente el script de terminal
-                if bash "$(dirname "$0")/scripts/terminal-setup.sh"; then
+                if bash "$SCRIPT_DIR/scripts/terminal-setup.sh"; then
                     echo ""
                     echo -e "${GREEN}✅ ¡Terminal configurado exitosamente!${NC}"
                     echo -e "${BLUE}ℹ️  Reinicia tu terminal para aplicar todos los cambios${NC}"
                 else
                     echo ""
                     echo -e "${YELLOW}⚠️  Hubo algunos problemas con la configuración del terminal${NC}"
-                    echo -e "${BLUE}ℹ️  Puedes ejecutar manualmente: ./scripts/terminal-setup.sh${NC}"
+                    echo -e "${BLUE}ℹ️  Puedes ejecutar manualmente: $SCRIPT_DIR/scripts/terminal-setup.sh${NC}"
                 fi
                 break
                 ;;

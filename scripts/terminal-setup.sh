@@ -20,6 +20,17 @@
 set -e  # Salir si hay errores
 set -u  # Salir si hay variables no definidas
 
+# Definir variables que podrían no estar definidas
+TERM_PROGRAM=${TERM_PROGRAM:-""}
+TERM=${TERM:-""}
+SHELL=${SHELL:-""}
+COLORTERM=${COLORTERM:-""}
+LC_TERMINAL=${LC_TERMINAL:-""}
+TERM_VERSION=${TERM_VERSION:-""}
+OSTYPE=${OSTYPE:-""}
+ZSH_CUSTOM=${ZSH_CUSTOM:-""}
+NVM_DIR=${NVM_DIR:-""}
+
 # Colores para output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -257,8 +268,9 @@ install_fonts() {
             # Instalar fuentes manualmente
             show_info "Instalando fuentes Nerd Font..."
 
-            local font_dir="/usr/local/share/fonts/nerd-fonts"
-            sudo mkdir -p "$font_dir"
+            # Usar directorio de usuario para evitar problemas de permisos
+            local font_dir="$HOME/.local/share/fonts/nerd-fonts"
+            mkdir -p "$font_dir"
 
             # Descargar MesloLGS NF (recomendada para Powerlevel10k)
             show_info "Descargando MesloLGS NF..."
@@ -275,13 +287,13 @@ install_fonts() {
 
                 if [[ ! -f "$font_dir/$filename" ]]; then
                     show_info "Descargando $filename..."
-                    sudo wget -q "$url" -O "$font_dir/$filename"
+                    wget -q "$url" -O "$font_dir/$filename"
                 fi
             done
 
             # Actualizar cache de fuentes
             show_info "Actualizando cache de fuentes..."
-            sudo fc-cache -f -v
+            fc-cache -f -v
 
             show_success "✅ Fuentes instaladas correctamente"
             show_info "💡 Configura tu terminal para usar 'MesloLGS NF'"
@@ -459,34 +471,67 @@ install_additional_tools() {
         "apt")
             show_info "Instalando herramientas adicionales (apt)..."
 
-            # Instalar herramientas disponibles en apt
+            # Asegurar que el repositorio 'universe' esté habilitado (contiene muchas herramientas)
+            show_info "Habilitando el repositorio 'universe'..."
+            sudo add-apt-repository -y universe
+            show_info "Actualizando listas de paquetes después de habilitar 'universe'..."
+            sudo apt update
+
+            # Instalar herramientas básicas primero
             sudo apt install -y \
                 bat \
                 fd-find \
                 fzf \
                 ripgrep \
                 autojump \
-                python3-pip
+                python3-pip \
+                pipx
 
-            # Crear enlaces simbólicos para compatibilidad
-            sudo ln -sf /usr/bin/batcat /usr/local/bin/bat 2>/dev/null || true
-            sudo ln -sf /usr/bin/fdfind /usr/local/bin/fd 2>/dev/null || true
+            # Instalar thefuck usando la estrategia más robusta
+            show_info "Instalando thefuck con método de respaldo..."
+            if sudo apt install -y python3-thefuck 2>/dev/null; then
+                show_success "thefuck instalado desde apt (python3-thefuck)"
+            elif sudo apt install -y thefuck 2>/dev/null; then
+                show_success "thefuck instalado desde apt (thefuck)"
+            else
+                show_info "Instalando thefuck con pipx (método seguro)..."
+                pipx install thefuck
+                show_success "thefuck instalado con pipx"
+            fi
 
-            # Instalar eza manualmente desde GitHub
+            # Crear enlaces simbólicos para compatibilidad en directorio de usuario
+            show_info "Creando enlaces simbólicos para compatibilidad..."
+            mkdir -p "$HOME/.local/bin"
+
+            # Enlace para bat (batcat en Ubuntu/Debian)
+            if command -v batcat &> /dev/null && ! command -v bat &> /dev/null; then
+                ln -sf "$(which batcat)" "$HOME/.local/bin/bat"
+                show_info "Enlace creado: bat -> batcat"
+            fi
+
+            # Enlace para fd (fdfind en Ubuntu/Debian)
+            if command -v fdfind &> /dev/null && ! command -v fd &> /dev/null; then
+                ln -sf "$(which fdfind)" "$HOME/.local/bin/fd"
+                show_info "Enlace creado: fd -> fdfind"
+            fi
+
+            # Instalar eza manualmente desde GitHub en directorio de usuario
             show_info "Instalando eza desde GitHub..."
             if ! command -v eza &> /dev/null; then
-                EZA_VERSION=$(curl -s https://api.github.com/repos/eza-community/eza/releases/latest | grep -Po '"tag_name": "v\K[^"]*')
+                show_info "Descargando eza desde GitHub..."
+                EZA_VERSION=$(curl -s https://api.github.com/repos/eza-community/eza/releases/latest | grep -Po '"tag_name": "v\K[^"]*' || echo "latest")
+                mkdir -p "$HOME/.local/bin"
                 wget -O /tmp/eza.tar.gz "https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz"
-                sudo tar -xzf /tmp/eza.tar.gz -C /usr/local/bin/
-                sudo chmod +x /usr/local/bin/eza
+                tar -xzf /tmp/eza.tar.gz -C "$HOME/.local/bin/"
+                chmod +x "$HOME/.local/bin/eza"
                 rm /tmp/eza.tar.gz
-                show_success "eza instalado correctamente"
+                show_success "eza instalado correctamente en $HOME/.local/bin"
             else
                 show_info "eza ya está instalado"
             fi
 
-            # Instalar thefuck via pip
-            pip3 install --user thefuck
+            # NOTA: thefuck se instala a través de apt como python3-thefuck para
+            # cumplir con la protección PEP 668 en sistemas Debian/Ubuntu modernos
             ;;
         "brew")
             show_info "Instalando herramientas adicionales (brew)..."
@@ -571,9 +616,11 @@ configure_shell() {
 
             # Intentar cambiar shell por defecto
             show_info "Cambiando shell por defecto a zsh..."
-            show_warning "Se te solicitará tu contraseña si es necesario"
+            show_warning "⚠️ Se te solicitará tu contraseña para cambiar el shell"
+            echo "   💡 Presiona Enter después de ingresar tu contraseña"
 
-            if chsh -s "$zsh_path" 2>/dev/null; then
+            # No redirigir stderr para que se vea el prompt de contraseña
+            if chsh -s "$zsh_path"; then
                 show_success "✅ Shell cambiado a Zsh exitosamente"
                 show_warning "⚠️ Cierra y reabre la terminal para aplicar los cambios"
             else
@@ -706,9 +753,16 @@ install_argos_system() {
 
     # Verificar que $HOME/.local/bin esté en PATH
     if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
-        show_info "Agregando $HOME/.local/bin al PATH..."
-        # Ya está en el .zshrc, pero por si acaso
-        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.zshrc" || true
+        show_info "Agregando $HOME/.local/bin al PATH en .zshrc..."
+        # Verificar que no esté ya en el archivo para evitar duplicados
+        if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$HOME/.zshrc" 2>/dev/null; then
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.zshrc"
+            show_success "PATH actualizado en .zshrc"
+        else
+            show_info "PATH ya está configurado en .zshrc"
+        fi
+    else
+        show_info "PATH ya contiene $HOME/.local/bin"
     fi
 
     show_success "Sistema ARGOS instalado correctamente"
