@@ -37,9 +37,9 @@ function Show-Banner {
     Clear-Host
     Write-Host ""
     Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "║            🪟 WINDOWS DEVELOPMENT SETUP 3.0                ║" -ForegroundColor Cyan
-    Write-Host "║                                                              ║" -ForegroundColor Cyan
-    Write-Host "║     Despachador Inteligente para Configuración Universal    ║" -ForegroundColor White
+    Write-Host "│            🪟 WINDOWS DEVELOPMENT SETUP 3.0                │" -ForegroundColor Cyan
+    Write-Host "│                                                              │" -ForegroundColor Cyan
+    Write-Host "│     Despachador Inteligente para Configuración Universal    │" -ForegroundColor White
     Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
     Write-Host ""
 }
