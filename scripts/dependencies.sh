@@ -380,7 +380,7 @@ install_dev_tools() {
                 fd \
                 ripgrep \
                 fzf \
-                exa \
+                eza \
                 htop \
                 neofetch 2>/dev/null || true
             ;;
@@ -390,7 +390,7 @@ install_dev_tools() {
                 fd-find \
                 ripgrep \
                 fzf \
-                exa \
+                eza \
                 htop \
                 neofetch 2>/dev/null || true
 

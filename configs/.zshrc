@@ -175,10 +175,10 @@ fi
 # PASO 4: INSTALAR HERRAMIENTAS ADICIONALES DE CLI
 # ------------------------------------------------------------------------------
 # ▼▼▼ EN macOS (CON HOMEBREW) ▼▼▼
-# brew install exa bat fd fzf ripgrep neofetch autojump thefuck
+# brew install eza bat fd fzf ripgrep neofetch autojump thefuck
 # ---
 # ▼▼▼ EN UBUNTU / DEBIAN ▼▼▼
-# sudo apt install -y exa bat fd-find fzf ripgrep neofetch autojump python3-pip
+# sudo apt install -y eza bat fd-find fzf ripgrep neofetch autojump python3-pip
 # # En Ubuntu, 'bat' a veces se instala como 'batcat'. Si es así, crea un enlace:
 # # sudo ln -s /usr/bin/batcat /usr/local/bin/bat
 # # 'fd' se instala como 'fdfind'. Crea un enlace para usarlo como 'fd':
