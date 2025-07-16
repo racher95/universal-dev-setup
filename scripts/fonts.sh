@@ -119,10 +119,54 @@ install_font_meslo_nerd() {
 install_font_source_code_pro() {
     if [[ ! -f "$FONT_DIR/SourceCodePro-Regular.ttf" ]]; then
         show_info "Instalando Source Code Pro..."
-        wget -q https://github.com/adobe-fonts/source-code-pro/releases/download/2.038R-ro%2F1.058R-it%2F1.018R-VAR/TTF-source-code-pro-2.038R-ro-1.058R-it.zip
-        unzip -q TTF-source-code-pro-2.038R-ro-1.058R-it.zip
-        sudo cp TTF/*.ttf "$FONT_DIR/"
-        rm -rf TTF-source-code-pro-2.038R-ro-1.058R-it.zip TTF/
+        
+        # Descargar archivo ZIP
+        if wget -q https://github.com/adobe-fonts/source-code-pro/releases/download/2.038R-ro%2F1.058R-it%2F1.018R-VAR/TTF-source-code-pro-2.038R-ro-1.058R-it.zip; then
+            
+            # Descomprimir archivo
+            if unzip -q TTF-source-code-pro-2.038R-ro-1.058R-it.zip; then
+                
+                # Verificar estructura del archivo descomprimido y copiar fuentes
+                local ttf_copied=false
+                
+                if [[ -d "TTF" ]] && [[ -n "$(ls TTF/*.ttf 2>/dev/null)" ]]; then
+                    sudo cp TTF/*.ttf "$FONT_DIR/"
+                    rm -rf TTF/
+                    ttf_copied=true
+                elif [[ -d "source-code-pro-2.038R-ro-1.058R-it" ]]; then
+                    if [[ -d "source-code-pro-2.038R-ro-1.058R-it/TTF" ]] && [[ -n "$(ls source-code-pro-2.038R-ro-1.058R-it/TTF/*.ttf 2>/dev/null)" ]]; then
+                        sudo cp source-code-pro-2.038R-ro-1.058R-it/TTF/*.ttf "$FONT_DIR/"
+                        ttf_copied=true
+                    fi
+                    rm -rf source-code-pro-2.038R-ro-1.058R-it/
+                else
+                    # Buscar archivos TTF en cualquier ubicación
+                    local ttf_files=($(find . -name "*.ttf" -type f))
+                    if [[ ${#ttf_files[@]} -gt 0 ]]; then
+                        for ttf_file in "${ttf_files[@]}"; do
+                            sudo cp "$ttf_file" "$FONT_DIR/"
+                        done
+                        ttf_copied=true
+                        # Limpiar archivos TTF sueltos
+                        rm -f *.ttf
+                    fi
+                fi
+                
+                # Limpiar archivo ZIP
+                rm -f TTF-source-code-pro-2.038R-ro-1.058R-it.zip
+                
+                if [[ "$ttf_copied" == true ]]; then
+                    show_success "Source Code Pro instalado correctamente"
+                else
+                    show_warning "No se encontraron archivos TTF en el ZIP de Source Code Pro"
+                fi
+            else
+                show_error "Error al descomprimir Source Code Pro"
+                rm -f TTF-source-code-pro-2.038R-ro-1.058R-it.zip
+            fi
+        else
+            show_error "Error al descargar Source Code Pro"
+        fi
     fi
 }
 

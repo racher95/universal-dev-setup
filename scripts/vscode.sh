@@ -934,11 +934,13 @@ add_macos_settings() {
   "terminal.integrated.profiles.osx": {
     "zsh": {
       "path": "zsh",
-      "args": ["-l"]
+      "args": ["-l"],
+      "icon": "terminal"
     },
     "bash": {
       "path": "bash",
-      "args": ["-l"]
+      "args": ["-l"],
+      "icon": "terminal-bash"
     }
   },
   "editor.fontFamily": "'Fira Code', 'JetBrains Mono', 'SF Mono', 'Monaco', monospace",
