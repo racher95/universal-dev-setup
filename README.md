@@ -69,14 +69,14 @@ install.bat
 #### Instalación rápida (un comando):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tu-usuario/universal-dev-setup/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/racher95/universal-dev-setup/main/install.sh | bash
 ```
 
 #### Instalación manual:
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/tu-usuario/universal-dev-setup.git
+git clone https://github.com/racher95/universal-dev-setup.git
 cd universal-dev-setup
 
 # Ejecutar el script
