@@ -319,9 +319,10 @@ get_system_extensions() {
     # Extensiones específicas por sistema
     case "$system" in
         "macOS")
-            # macOS no necesita extensiones de WSL/Remote
+            # macOS - incluye Remote-SSH para desarrollo remoto
             local macos_extensions=(
                 "${base_extensions[@]}"
+                "ms-vscode-remote.remote-ssh"
             )
             echo "${macos_extensions[@]}"
             ;;
@@ -335,9 +336,10 @@ get_system_extensions() {
             echo "${wsl_extensions[@]}"
             ;;
         "Linux")
-            # Linux nativo - extensiones base
+            # Linux nativo - incluye Remote-SSH para desarrollo remoto
             local linux_extensions=(
                 "${base_extensions[@]}"
+                "ms-vscode-remote.remote-ssh"
             )
             echo "${linux_extensions[@]}"
             ;;
