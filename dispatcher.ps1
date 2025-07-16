@@ -65,10 +65,7 @@ function Show-Info {
 }
 
 function Show-Step {
-    param(
-        [Parameter(Mandatory=$true)]
-        [string]$Message
-    )
+    param([string]$Message)
     Write-Host "🔧 $Message" -ForegroundColor Magenta
 }
 
