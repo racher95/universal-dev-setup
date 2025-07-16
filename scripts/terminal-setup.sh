@@ -219,14 +219,14 @@ install_fonts() {
                 show_info "Desvinculando tap obsoleto 'homebrew/cask-fonts'..."
                 brew untap homebrew/cask-fonts
             fi
-            
+
             # Las fuentes Nerd Font ahora están disponibles directamente
             local fonts=(
                 "font-meslo-lg-nerd-font"
                 "font-fira-code-nerd-font"
                 "font-jetbrains-mono-nerd-font"
             )
-            
+
             for font in "${fonts[@]}"; do
                 if ! brew list --cask "$font" &> /dev/null; then
                     show_info "Instalando $font..."
@@ -371,7 +371,7 @@ validate_plugin_sync() {
 
     # Desactivar temporalmente set -u para manejar arrays vacíos
     set +u
-    
+
     local zshrc_file="$HOME/.zshrc"
     local plugins_installed=()
     local plugins_in_zshrc=()
@@ -389,7 +389,7 @@ validate_plugin_sync() {
     # Obtener plugins en .zshrc usando comandos específicos por sistema
     if [[ -f "$zshrc_file" ]]; then
         local plugins_section=""
-        
+
         # Comandos separados por sistema operativo
         if [[ "$SYSTEM" == "macOS" ]]; then
             # macOS (BSD) - usar awk para extraer plugins
@@ -398,7 +398,7 @@ validate_plugin_sync() {
             # Linux/WSL (GNU) - usar sed con head/tail que funciona en GNU
             plugins_section=$(sed -n '/plugins=(/,/)/p' "$zshrc_file" | sed '1d;$d')
         fi
-        
+
         if [[ -n "$plugins_section" ]]; then
             # Procesar cada línea
             while IFS= read -r line; do
@@ -440,7 +440,7 @@ validate_plugin_sync() {
     else
         show_success "Todos los plugins están correctamente sincronizados"
     fi
-    
+
     # Reactivar set -u
     set -u
 }
@@ -480,7 +480,7 @@ install_additional_tools() {
     case "$PACKAGE_MANAGER" in
         "apt")
             show_info "Instalando herramientas adicionales (apt)..."
-            
+
             # Instalar herramientas disponibles en apt
             sudo apt install -y \
                 bat \
@@ -572,7 +572,7 @@ configure_shell() {
 
     # Obtener la ruta de zsh con fallback
     local zsh_path=$(which zsh 2>/dev/null || echo "/bin/zsh")
-    
+
     # Verificar que zsh existe
     if [[ ! -x "$zsh_path" ]]; then
         show_error "No se encontró zsh en el sistema"
@@ -593,7 +593,7 @@ configure_shell() {
             # Intentar cambiar shell por defecto
             show_info "Cambiando shell por defecto a zsh..."
             show_warning "Se te solicitará tu contraseña si es necesario"
-            
+
             if chsh -s "$zsh_path" 2>/dev/null; then
                 show_success "✅ Shell cambiado a Zsh exitosamente"
                 show_warning "⚠️ Cierra y reabre la terminal para aplicar los cambios"
@@ -603,7 +603,7 @@ configure_shell() {
                 show_info "   1. Ejecuta manualmente: chsh -s $zsh_path"
                 show_info "   2. O configura tu terminal para usar zsh por defecto"
                 show_info "   3. En algunos sistemas, puedes necesitar privilegios adicionales"
-                
+
                 # Mostrar instrucciones específicas por sistema
                 case "$SYSTEM" in
                     "macOS")
@@ -962,10 +962,10 @@ offer_return_to_main_menu() {
                 echo ""
                 echo -e "${CYAN}🚀 Abriendo menú principal...${NC}"
                 echo ""
-                
+
                 # Buscar el script install.sh
                 local install_script="$(dirname "$(dirname "${BASH_SOURCE[0]}")")/install.sh"
-                
+
                 if [[ -f "$install_script" ]]; then
                     # Ejecutar el script principal
                     exec bash "$install_script"
