@@ -139,13 +139,13 @@ check_config_files() {
     fi
 
     # Verificar archivos de ARGOS
-    if [[ ! -f "$CONFIG_DIR/argos-fetch-portable" ]]; then
-        missing_files+=("argos-fetch-portable")
+    if [[ ! -f "$CONFIG_DIR/argos-fetch-portable-v2" ]]; then
+        missing_files+=("argos-fetch-portable-v2")
     fi
 
     # Verificar imágenes ARGOS según el sistema
-    if [[ ! -f "$CONFIG_DIR/Argos-FetchWU.png" ]]; then
-        missing_files+=("Argos-FetchWU.png")
+    if [[ ! -f "$CONFIG_DIR/loboMacOS.png" ]]; then
+        missing_files+=("loboMacOS.png")
     fi
 
     if [[ ! -f "$CONFIG_DIR/loboMacOS.png" ]]; then
@@ -709,13 +709,26 @@ install_argos_system() {
     mkdir -p "$HOME/.config/argos"
 
     # Copiar script portable
-    show_info "Instalando script ARGOS adaptativo..."
-    if [[ -f "$CONFIG_DIR/argos-fetch-portable" ]]; then
-        cp "$CONFIG_DIR/argos-fetch-portable" "$HOME/.local/bin/argos-fetch"
+    show_info "Instalando script ARGOS adaptativo v2.0..."
+    if [[ -f "$CONFIG_DIR/argos-fetch-portable-v2" ]]; then
+        cp "$CONFIG_DIR/argos-fetch-portable-v2" "$HOME/.local/bin/argos-fetch"
         chmod +x "$HOME/.local/bin/argos-fetch"
     else
-        show_error "Script argos-fetch-portable no encontrado en $CONFIG_DIR"
+        show_error "Script argos-fetch-portable-v2 no encontrado en $CONFIG_DIR"
         return 1
+    fi
+
+    # Instalar imgcat para iTerm2 si es necesario
+    if [[ "$SYSTEM" == "macOS" ]]; then
+        show_info "Instalando imgcat para iTerm2..."
+        if [[ -f "$CONFIG_DIR/imgcat" ]]; then
+            cp "$CONFIG_DIR/imgcat" "$HOME/.local/bin/imgcat"
+            chmod +x "$HOME/.local/bin/imgcat"
+            show_success "✅ imgcat instalado correctamente"
+        else
+            show_warning "⚠️  imgcat no encontrado en $CONFIG_DIR"
+            show_info "   Se descargará automáticamente si es necesario"
+        fi
     fi
 
     # Copiar imagen ARGOS específica según sistema
@@ -730,9 +743,9 @@ install_argos_system() {
         image_name="loboMacOS.png"
         show_info "🍎 Usando imagen específica para macOS: loboMacOS.png"
     else
-        image_source="$CONFIG_DIR/Argos-FetchWU.png"
-        image_name="Argos-FetchWU.png"
-        show_info "🐧 Usando imagen para WSL/Linux: Argos-FetchWU.png"
+        image_source="$CONFIG_DIR/loboMacOS.png"
+        image_name="loboMacOS.png"
+        show_info "🐧 Usando imagen unificada: loboMacOS.png"
     fi
 
     # Verificar que la imagen existe

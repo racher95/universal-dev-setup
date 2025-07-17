@@ -1,0 +1,122 @@
+#!/bin/bash
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🐺 ARGOS FETCH v2.0 - Optimizado para rendimiento y alineación perfecta
+# ═══════════════════════════════════════════════════════════════════════════════
+# Script de bienvenida con imagen y texto ASCII lado a lado
+# Versión final optimizada - Julio 2025
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# --- CONFIGURACIÓN ---
+# <<< MEJORA: Se usa un array para buscar en varias rutas. Más flexible. >>>
+ARGOS_IMAGE_PATHS=(
+    "$HOME/.local/share/argos/loboMacOS.png"
+    "$HOME/.config/argos/loboMacOS.png"
+    "$HOME/.local/share/argos/argos-image.png"
+    "$HOME/.config/argos/argos-image.png"
+)
+
+# Ancho de la imagen en celdas de caracteres. AJUSTA ESTOS VALORES.
+# Deben coincidir para que la alineación funcione.
+IMAGE_WIDTH_ITERM=25
+IMAGE_HEIGHT_ITERM=12
+
+IMAGE_WIDTH_CHAFA=30
+IMAGE_HEIGHT_CHAFA=15
+
+# --- FUNCIÓN PRINCIPAL ---
+# <<< MEJORA: Toda la lógica está encapsulada en una función para poder ejecutarla en segundo plano. >>>
+function argos_main() {
+    # Pequeña pausa para asegurar que iTerm2 esté completamente listo
+    sleep 0.1
+    
+    # <<< MEJORA: Silencia los errores de 'kill' si el proceso no existe. >>>
+    # Evita que múltiples instancias se ejecuten al abrir terminales rápidamente.
+    # Buscar procesos de este script específico, no todos los bash
+    pgrep -f "$(basename "$0")" | grep -v $$ | xargs -r kill &>/dev/null
+
+    local ARGOS_IMAGE=""
+    # Buscar la imagen en las rutas definidas
+    for path in "${ARGOS_IMAGE_PATHS[@]}"; do
+        if [[ -r "$path" ]]; then # -r verifica que el archivo existe Y se puede leer
+            ARGOS_IMAGE="$path"
+            break
+        fi
+    done
+
+    # Si no se encontró ninguna imagen, no mostrar nada y salir limpiamente.
+    if [[ -z "$ARGOS_IMAGE" ]]; then
+        # echo "⚠️ Imagen ARGOS no encontrada." >&2 # Descomentar para depurar
+        return 1
+    fi
+
+    # --- Generación de Texto ---
+    # <<< MEJORA: El texto se define una sola vez y se reutiliza. >>>
+    local USERNAME
+    USERNAME=$(whoami)
+    local TEXT_INFO
+    TEXT_INFO=$(printf "
+██████╗ ██████╗  ██████╗  ██████╗ ███████╗
+██╔══██╗██╔══██╗██╔════╝ ██╔═══██╗██╔════╝
+███████║██████╔╝██║  ███╗██║   ██║███████╗
+██╔══██║██╔══██╗██║   ██║██║   ██║╚════██║
+██║  ██║██║  ██║╚██████╔╝╚██████╔╝███████║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚══════╝
+
+        🐺 W O L F   S Y S T E M 🐺
+
+    👤 %s
+" "$USERNAME")
+
+    # Limpiar pantalla antes de dibujar
+    clear
+
+    # --- Lógica de Dibujado Lado a Lado ---
+    # Mejor detección de iTerm2
+    local IMGCAT_PATH=""
+    if command -v imgcat &>/dev/null; then
+        IMGCAT_PATH="imgcat"
+    elif [[ -x "$(dirname "$0")/imgcat" ]]; then
+        IMGCAT_PATH="$(dirname "$0")/imgcat"
+    elif [[ -x "$HOME/.local/bin/imgcat" ]]; then
+        IMGCAT_PATH="$HOME/.local/bin/imgcat"
+    fi
+    
+    if [[ "$TERM_PROGRAM" == "iTerm.app" || "$LC_TERMINAL" == "iTerm2" ]] && [[ -n "$IMGCAT_PATH" ]]; then
+        # Método para iTerm2 - Enfoque optimizado con tput
+        # 1. Imprime la imagen
+        "$IMGCAT_PATH" --width "$IMAGE_WIDTH_ITERM" --height "$IMAGE_HEIGHT_ITERM" "$ARGOS_IMAGE"
+
+        # 2. Guarda el texto en un array para posicionamiento línea por línea
+        local text_lines=()
+        while IFS= read -r line; do
+            text_lines+=("$line")
+        done <<< "$TEXT_INFO"
+
+        # 3. Posiciona cada línea del texto al lado derecho de la imagen
+        local line_num=0
+        for line in "${text_lines[@]}"; do
+            tput cup $line_num 26
+            echo "$line"
+            ((line_num++))
+        done
+        
+    elif command -v chafa &>/dev/null; then
+        # Método para otras terminales con 'chafa'
+        # <<< MEJORA: Se usa 'paste' con sustitución de procesos, que es más limpio que archivos temporales. >>>
+        paste -d' ' \
+            <(chafa --symbols=block --size="${IMAGE_WIDTH_CHAFA}x${IMAGE_HEIGHT_CHAFA}" "$ARGOS_IMAGE") \
+            <(echo "$TEXT_INFO")
+    else
+        # Fallback si no hay visor de imágenes: solo mostrar el texto
+        echo "$TEXT_INFO"
+    fi
+    
+    # Salto de línea final para que el prompt no quede pegado
+    echo
+}
+
+# --- EJECUCIÓN ---
+# <<< MEJORA CLAVE: Ejecuta la función directamente para mostrar bienvenida. >>>
+# Si se ejecuta desde .zshrc, debe ejecutarse en primer plano para mostrarse correctamente.
+argos_main
