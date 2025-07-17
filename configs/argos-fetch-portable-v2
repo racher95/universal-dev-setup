@@ -29,7 +29,7 @@ IMAGE_HEIGHT_CHAFA=15
 function argos_main() {
     # Pausa optimizada para iTerm2
     sleep 0.05
-    
+
     # Optimización: Solo limpiar procesos si realmente existen
     local existing_processes
     existing_processes=$(pgrep -f "$(basename "$0")" | grep -v $$)
@@ -90,7 +90,7 @@ function argos_main() {
     fi
 
     if [[ "$TERM_PROGRAM" == "iTerm.app" || "$LC_TERMINAL" == "iTerm2" ]] && [[ -n "$IMGCAT_PATH" ]]; then
-        # Método optimizado para iTerm2 
+        # Método optimizado para iTerm2
         "$IMGCAT_PATH" --width "$IMAGE_WIDTH_ITERM" --height "$IMAGE_HEIGHT_ITERM" "$ARGOS_IMAGE"
 
         # Optimización: Procesamiento de texto más eficiente
@@ -100,7 +100,7 @@ function argos_main() {
             text_output+="\033[${line_num};26H${line}\n"
             ((line_num++))
         done <<< "$TEXT_INFO"
-        
+
         # Imprimir todo el texto de una vez
         printf "$text_output"
 
