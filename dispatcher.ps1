@@ -314,10 +314,10 @@ function Invoke-TerminalConfiguration {
     try {
         # Verificar si Windows Terminal esta disponible
         $wtAvailable = Get-Command "wt.exe" -ErrorAction SilentlyContinue
-        
+
         if ($wtAvailable -and $wtInstalled) {
             Show-Info "Usando Windows Terminal para mejor experiencia..."
-            
+
             # Usar Windows Terminal con perfil WSL
             try {
                 Start-Process -FilePath "wt.exe" -ArgumentList "-p", "Ubuntu", "-d", "~/universal-dev-setup", "bash", "-c", "./install.sh --auto; exec bash" -WindowStyle Normal
@@ -331,14 +331,14 @@ function Invoke-TerminalConfiguration {
         }
     } catch {
         Show-Info "Usando terminal WSL predeterminado..."
-        
+
         try {
             # Usar WSL directo con --cd
             Start-Process -FilePath "wsl.exe" -ArgumentList "-d", "Ubuntu", "--cd", "~/universal-dev-setup", "-e", "bash", "-c", "./install.sh --auto; exec bash" -WindowStyle Normal
             Show-Success "Terminal WSL abierto con instalacion automatica"
         } catch {
             Show-Warning "Error con --cd: $_"
-            
+
             try {
                 # Metodo alternativo con bash -c
                 Start-Process -FilePath "wsl.exe" -ArgumentList "-d", "Ubuntu", "bash", "-c", "cd ~/universal-dev-setup && ./install.sh --auto; exec bash" -WindowStyle Normal
@@ -356,11 +356,11 @@ function Invoke-TerminalConfiguration {
     # Paso 5: Abrir VS Code en el directorio del proyecto WSL
     if ($vscodeConfigured) {
         Show-Info "Paso 5: Abriendo VS Code en el directorio del proyecto WSL..."
-        
+
         try {
             # Esperar un poco para que el proyecto se configure
             Start-Sleep -Seconds 3
-            
+
             # Abrir VS Code en el directorio WSL
             Start-Process -FilePath "code" -ArgumentList "--remote", "wsl+Ubuntu", "~/universal-dev-setup" -WindowStyle Normal
             Show-Success "VS Code abierto en entorno WSL"
@@ -386,60 +386,32 @@ function Invoke-TerminalConfiguration {
 }
 
 function Install-WindowsTerminal {
-    Show-Step "Verificando instalacion de Windows Terminal..."
-
-    # Verificar si Windows Terminal ya esta instalado
-    $wtInstalled = Get-AppxPackage -Name Microsoft.WindowsTerminal -ErrorAction SilentlyContinue
-
-    if ($wtInstalled) {
-        Show-Success "Windows Terminal ya esta instalado"
-        return $true
-    }
-
-    Show-Info "Instalando Windows Terminal..."
-    
+    Show-Step "Instalando terminal de Windows..."
     try {
-        # Intentar instalar desde Microsoft Store via winget
-        $wingetResult = & winget install Microsoft.WindowsTerminal 2>&1
-        if ($LASTEXITCODE -eq 0) {
-            Show-Success "Windows Terminal instalado via winget"
-            return $true
+        # Verificar si ya está instalado
+        $terminalPackage = "Microsoft.WindowsTerminal"
+        $installed = Get-AppxPackage -Name $terminalPackage -ErrorAction SilentlyContinue
+        if ($installed) {
+            Show-Success "Terminal de Windows ya está instalado."
+            return
+        }
+
+        # Intentar instalar desde Microsoft Store
+        Show-Info "Intentando instalar desde Microsoft Store..."
+        Start-Process "ms-windows-store://pdp/?ProductId=9N0DX20HK701" -Wait
+
+        # Verificar si se instaló
+        Start-Sleep -Seconds 5
+        $installed = Get-AppxPackage -Name $terminalPackage -ErrorAction SilentlyContinue
+        if ($installed) {
+            Show-Success "Terminal de Windows instalado correctamente."
         } else {
-            Show-Warning "Error con winget: $wingetResult"
+            Show-Warning "No se pudo verificar la instalación automática. Instala manualmente desde Microsoft Store."
         }
     } catch {
-        Show-Warning "winget no disponible: $_"
+        Show-Error "Error al instalar el terminal de Windows: $_"
+        Show-Info "Instala manualmente desde: https://aka.ms/terminal-preview"
     }
-
-    try {
-        # Metodo alternativo: usar Add-AppxPackage
-        Show-Info "Intentando instalacion alternativa..."
-        $storeApp = Get-AppxPackage -Name Microsoft.WindowsTerminal -AllUsers -ErrorAction SilentlyContinue
-        if ($storeApp) {
-            Show-Success "Windows Terminal encontrado en el sistema"
-            return $true
-        }
-
-        # Intentar instalar desde GitHub releases
-        Show-Info "Descargando Windows Terminal desde GitHub..."
-        $latestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/microsoft/terminal/releases/latest"
-        $msixBundle = $latestRelease.assets | Where-Object { $_.name -like "*.msixbundle" } | Select-Object -First 1
-        
-        if ($msixBundle) {
-            $downloadPath = Join-Path $env:TEMP $msixBundle.name
-            Invoke-WebRequest -Uri $msixBundle.browser_download_url -OutFile $downloadPath
-            Add-AppxPackage -Path $downloadPath
-            Remove-Item $downloadPath -Force
-            Show-Success "Windows Terminal instalado desde GitHub"
-            return $true
-        }
-    } catch {
-        Show-Warning "Error con instalacion alternativa: $_"
-    }
-
-    Show-Error "No se pudo instalar Windows Terminal automaticamente"
-    Show-Info "Por favor, instala Windows Terminal manualmente desde Microsoft Store"
-    return $false
 }
 
 function Configure-VSCodeForWSL {
@@ -464,7 +436,7 @@ function Configure-VSCodeForWSL {
     if (-not $vscodeInstalled) {
         Show-Warning "VS Code no esta instalado"
         Show-Info "Instalando VS Code..."
-        
+
         try {
             & winget install Microsoft.VisualStudioCode 2>$null
             if ($LASTEXITCODE -eq 0) {
@@ -484,7 +456,7 @@ function Configure-VSCodeForWSL {
 
     if ($vscodeInstalled) {
         Show-Info "Instalando extension WSL para VS Code..."
-        
+
         try {
             # Instalar extension WSL
             & code --install-extension ms-vscode-remote.remote-wsl --force 2>$null
@@ -515,7 +487,7 @@ function Configure-VSCodeForWSL {
 
             $settingsPath = "${env:APPDATA}\Code\User\settings.json"
             $settingsDir = Split-Path $settingsPath -Parent
-            
+
             if (-not (Test-Path $settingsDir)) {
                 New-Item -ItemType Directory -Path $settingsDir -Force | Out-Null
             }

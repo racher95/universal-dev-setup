@@ -4,11 +4,67 @@
 # 🐺 ARGOS FETCH - Sistema de bienvenida visual para terminal
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Configuración de rutas portables
+# --- CONFIGURACIÓN ---
+# Rutas donde el instalador (`terminal-setup.sh`) debe dejar la imagen.
 ARGOS_IMAGE_PATH="$HOME/.local/share/argos/argos-image.png"
 ARGOS_IMAGE_FALLBACK="$HOME/.config/argos/argos-image.png"
 
-# Verificar que la imagen exista
+# --- FUNCIONES ---
+
+# Muestra una imagen usando imgcat nativo de iTerm2
+function display_iterm2_image {
+    local image_file="$1"
+
+    # Verificar que el archivo existe y es legible
+    if [[ ! -f "$image_file" ]]; then
+        echo "⚠️  Archivo de imagen no encontrado: $image_file"
+        return 1
+    fi
+
+    if [[ ! -r "$image_file" ]]; then
+        echo "⚠️  Sin permisos de lectura para: $image_file"
+        return 1
+    fi
+
+    # Usar imgcat si está disponible con tamaño controlado
+    if command -v imgcat &> /dev/null; then
+        # Redimensionar la imagen para que sea más pequeña y rápida
+        imgcat --width 20 --height 10 "$image_file"
+        return 0
+    fi
+
+    # Si no hay imgcat, mostrar mensaje y continuar sin imagen
+    echo "⚠️  imgcat no encontrado en iTerm2"
+    return 1
+}
+
+# Muestra una imagen usando chafa para terminales estándar
+function display_chafa_image {
+    local image_file="$1"
+    if ! command -v chafa &> /dev/null; then
+        echo "⚠️ chafa no encontrado. Instalar con: sudo apt install chafa / brew install chafa"
+        return 1
+    fi
+    chafa --symbols=block --size="25x12" "$image_file"
+}
+
+# --- SCRIPT PRINCIPAL ---
+
+# Silenciar mensaje de Powerlevel10k
+export POWERLEVEL9K_INSTANT_PROMPT=quiet
+
+# Función de diagnóstico
+function debug_info {
+    echo "=== DIAGNÓSTICO ==="
+    echo "Terminal: $TERM_PROGRAM"
+    echo "Imagen principal: $ARGOS_IMAGE_PATH"
+    echo "Imagen fallback: $ARGOS_IMAGE_FALLBACK"
+    echo "Imagen encontrada: $ARGOS_IMAGE"
+    echo "Permisos de imagen: $(ls -la "$ARGOS_IMAGE" 2>/dev/null || echo 'No disponible')"
+    echo "=================="
+}
+
+# Buscar la imagen
 ARGOS_IMAGE=""
 if [[ -f "$ARGOS_IMAGE_PATH" ]]; then
     ARGOS_IMAGE="$ARGOS_IMAGE_PATH"
@@ -19,68 +75,50 @@ else
     exit 1
 fi
 
-# Verificar chafa
-if ! command -v chafa &> /dev/null; then
-    echo "⚠️  chafa no encontrado. Instalar con: brew install chafa"
-    exit 1
-fi
-
 # Limpiar pantalla
 clear
 
 # Obtener información del sistema
 USERNAME=$(whoami)
-HOSTNAME=$(hostname)
-OS=$(uname -s)
-KERNEL=$(uname -r)
-UPTIME=$(uptime -p 2>/dev/null || echo "N/A")
-CURRENT_DIR=$(pwd)
 
-echo ""
-echo ""
+# Generar el bloque de texto compacto solo con ARGOS
+TEXT_INFO=$(printf "
+██████╗ ██████╗  ██████╗  ██████╗ ███████╗
+██╔══██╗██╔══██╗██╔════╝ ██╔═══██╗██╔════╝
+███████║██████╔╝██║  ███╗██║   ██║███████╗
+██╔══██║██╔══██╗██║   ██║██║   ██║╚════██║
+██║  ██║██║  ██║╚██████╔╝╚██████╔╝███████║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚══════╝
 
-# Crear archivos temporales para evitar problemas con arrays
-TEMP_IMAGE="/tmp/argos_image_$$"
-TEMP_TEXT="/tmp/argos_text_$$"
+🐺 W O L F   S Y S T E M 🐺
 
-# Generar imagen en archivo temporal
-if [[ "$TERM_PROGRAM" == "iTerm.app" ]]; then
-    chafa --symbols=block --size="18x12" "$ARGOS_IMAGE" > "$TEMP_IMAGE" 2>/dev/null
+👤 %s
+" "$USERNAME")
+
+# Ajustar el formato para mostrar imagen y texto lado a lado
+if [[ "$TERM_PROGRAM" == "iTerm.app" ]] && [[ -n "$ARGOS_IMAGE" ]]; then
+    if command -v imgcat &> /dev/null; then
+        TEMP_IMAGE_OUTPUT="/tmp/argos_img_$$"
+        TEMP_TEXT_OUTPUT="/tmp/argos_txt_$$"
+
+        # Generar imagen en archivo temporal
+        imgcat --width 20 --height 10 "$ARGOS_IMAGE" > "$TEMP_IMAGE_OUTPUT"
+
+        # Guardar texto en archivo temporal
+        echo "$TEXT_INFO" > "$TEMP_TEXT_OUTPUT"
+
+        # Mostrar lado a lado con paste
+        paste -d'\t' "$TEMP_IMAGE_OUTPUT" "$TEMP_TEXT_OUTPUT"
+
+        # Limpiar archivos temporales
+        rm -f "$TEMP_IMAGE_OUTPUT" "$TEMP_TEXT_OUTPUT"
+    else
+        echo "⚠️ imgcat no encontrado"
+        echo "$TEXT_INFO"
+    fi
+elif [[ -n "$ARGOS_IMAGE" ]]; then
+    paste -d'  ' <(display_chafa_image "$ARGOS_IMAGE") <(echo "$TEXT_INFO")
 else
-    chafa --symbols=block --size="25x12" "$ARGOS_IMAGE" > "$TEMP_IMAGE" 2>/dev/null
+    echo "⚠️  Imagen ARGOS no encontrada en las rutas de instalación."
+    echo "$TEXT_INFO"
 fi
-
-# Generar texto ARGOS en archivo temporal
-cat > "$TEMP_TEXT" << 'EOF'
-    ██████╗ ██████╗  ██████╗  ██████╗ ███████╗
-   ██╔══██╗██╔══██╗██╔════╝ ██╔═══██╗██╔════╝
-   ███████║██████╔╝██║  ███╗██║   ██║███████╗
-   ██╔══██║██╔══██╗██║   ██║██║   ██║╚════██║
-   ██║  ██║██║  ██║╚██████╔╝╚██████╔╝███████║
-   ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚══════╝
-
-        🐺 W O L F   S Y S T E M 🐺
-
-EOF
-
-# Agregar información del sistema
-cat >> "$TEMP_TEXT" << EOF
-   👤 Usuario: $USERNAME@$HOSTNAME
-   🖥️  Sistema: $OS
-   🔧 Kernel: $KERNEL
-   ⏱️  Uptime: $UPTIME
-   📂 Directorio: $CURRENT_DIR
-EOF
-
-# Mostrar lado a lado usando paste
-if [[ "$TERM_PROGRAM" == "iTerm.app" ]]; then
-    paste -d$'\t' "$TEMP_IMAGE" "$TEMP_TEXT" | sed 's/\t/  /'
-else
-    paste -d$'\t' "$TEMP_IMAGE" "$TEMP_TEXT" | sed 's/\t/    /'
-fi
-
-# Limpiar archivos temporales
-rm -f "$TEMP_IMAGE" "$TEMP_TEXT"
-
-echo ""
-echo ""
