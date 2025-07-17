@@ -27,13 +27,15 @@ IMAGE_HEIGHT_CHAFA=15
 # --- FUNCIÓN PRINCIPAL ---
 # <<< MEJORA: Toda la lógica está encapsulada en una función para poder ejecutarla en segundo plano. >>>
 function argos_main() {
-    # Pequeña pausa para asegurar que iTerm2 esté completamente listo
-    sleep 0.1
+    # Pausa optimizada para iTerm2
+    sleep 0.05
     
-    # <<< MEJORA: Silencia los errores de 'kill' si el proceso no existe. >>>
-    # Evita que múltiples instancias se ejecuten al abrir terminales rápidamente.
-    # Buscar procesos de este script específico, no todos los bash
-    pgrep -f "$(basename "$0")" | grep -v $$ | xargs -r kill &>/dev/null
+    # Optimización: Solo limpiar procesos si realmente existen
+    local existing_processes
+    existing_processes=$(pgrep -f "$(basename "$0")" | grep -v $$)
+    if [[ -n "$existing_processes" ]]; then
+        echo "$existing_processes" | xargs -r kill &>/dev/null
+    fi
 
     local ARGOS_IMAGE=""
     # Buscar la imagen en las rutas definidas
@@ -72,35 +74,36 @@ function argos_main() {
     clear
 
     # --- Lógica de Dibujado Lado a Lado ---
-    # Mejor detección de iTerm2
+    # Optimización: Cache de detección de imgcat
     local IMGCAT_PATH=""
-    if command -v imgcat &>/dev/null; then
+    if [[ -n "${IMGCAT_CACHED:-}" ]]; then
+        IMGCAT_PATH="$IMGCAT_CACHED"
+    elif command -v imgcat &>/dev/null; then
         IMGCAT_PATH="imgcat"
-    elif [[ -x "$(dirname "$0")/imgcat" ]]; then
-        IMGCAT_PATH="$(dirname "$0")/imgcat"
+        export IMGCAT_CACHED="$IMGCAT_PATH"
     elif [[ -x "$HOME/.local/bin/imgcat" ]]; then
         IMGCAT_PATH="$HOME/.local/bin/imgcat"
+        export IMGCAT_CACHED="$IMGCAT_PATH"
+    elif [[ -x "$(dirname "$0")/imgcat" ]]; then
+        IMGCAT_PATH="$(dirname "$0")/imgcat"
+        export IMGCAT_CACHED="$IMGCAT_PATH"
     fi
-    
+
     if [[ "$TERM_PROGRAM" == "iTerm.app" || "$LC_TERMINAL" == "iTerm2" ]] && [[ -n "$IMGCAT_PATH" ]]; then
-        # Método para iTerm2 - Enfoque optimizado con tput
-        # 1. Imprime la imagen
+        # Método optimizado para iTerm2 
         "$IMGCAT_PATH" --width "$IMAGE_WIDTH_ITERM" --height "$IMAGE_HEIGHT_ITERM" "$ARGOS_IMAGE"
 
-        # 2. Guarda el texto en un array para posicionamiento línea por línea
-        local text_lines=()
-        while IFS= read -r line; do
-            text_lines+=("$line")
-        done <<< "$TEXT_INFO"
-
-        # 3. Posiciona cada línea del texto al lado derecho de la imagen
+        # Optimización: Procesamiento de texto más eficiente
+        local text_output=""
         local line_num=0
-        for line in "${text_lines[@]}"; do
-            tput cup $line_num 26
-            echo "$line"
+        while IFS= read -r line; do
+            text_output+="\033[${line_num};26H${line}\n"
             ((line_num++))
-        done
+        done <<< "$TEXT_INFO"
         
+        # Imprimir todo el texto de una vez
+        printf "$text_output"
+
     elif command -v chafa &>/dev/null; then
         # Método para otras terminales con 'chafa'
         # <<< MEJORA: Se usa 'paste' con sustitución de procesos, que es más limpio que archivos temporales. >>>
@@ -111,7 +114,7 @@ function argos_main() {
         # Fallback si no hay visor de imágenes: solo mostrar el texto
         echo "$TEXT_INFO"
     fi
-    
+
     # Salto de línea final para que el prompt no quede pegado
     echo
 }
