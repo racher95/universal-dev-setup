@@ -365,6 +365,9 @@ function Invoke-TerminalConfiguration {
     $wtInstalled = Install-WindowsTerminal
     if (-not $wtInstalled) {
         Show-Warning "Windows Terminal no pudo ser instalado. Continuando con terminal predeterminado..."
+    } else {
+        Install-MesloLGSFont
+        Set-WindowsTerminalFontFace
     }
 
     # Paso 2: Configurar VS Code para WSL
@@ -623,19 +626,51 @@ function Copy-ProjectToWSL {
     }
 }
 
-function Invoke-WindowsNativeSetup {
-    Show-Step "Iniciando configuracion para Windows nativo..."
-
-    $installPath = Join-Path $PSScriptRoot "install.ps1"
-
-    if (Test-Path $installPath) {
-        Show-Info "Ejecutando install.ps1..."
-        & $installPath
-        Show-Success "Configuracion Windows completada"
-        return $true
+function Install-MesloLGSFont {
+    Show-Step "Instalando fuente MesloLGS NF en Windows..."
+    $fontUrls = @(
+        'https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Regular.ttf',
+        'https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Bold.ttf',
+        'https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Italic.ttf',
+        'https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Bold%20Italic.ttf'
+    )
+    $fontsFolder = "$env:SystemRoot\Fonts"
+    $tempFolder = "$env:TEMP\meslo-fonts"
+    New-Item -ItemType Directory -Path $tempFolder -Force | Out-Null
+    $installed = $true
+    foreach ($url in $fontUrls) {
+        $fileName = [System.IO.Path]::GetFileName($url)
+        $destPath = Join-Path $tempFolder $fileName
+        if (-not (Test-Path (Join-Path $fontsFolder $fileName))) {
+            Show-Info "Descargando $fileName..."
+            Invoke-WebRequest -Uri $url -OutFile $destPath -UseBasicParsing
+            try {
+                Copy-Item $destPath $fontsFolder -Force
+                $shellApp = New-Object -ComObject Shell.Application
+                $folder = $shellApp.Namespace($fontsFolder)
+                $folder.CopyHere($destPath)
+                # Registrar la fuente en el registro
+                $regPath = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts'
+                $fontRegName = $fileName -replace '\.ttf$', ''
+                if ($fileName -like '*Regular*') { $fontRegName = 'MesloLGS NF Regular (TrueType)' }
+                elseif ($fileName -like '*Bold Italic*') { $fontRegName = 'MesloLGS NF Bold Italic (TrueType)' }
+                elseif ($fileName -like '*Bold*') { $fontRegName = 'MesloLGS NF Bold (TrueType)' }
+                elseif ($fileName -like '*Italic*') { $fontRegName = 'MesloLGS NF Italic (TrueType)' }
+                Set-ItemProperty -Path $regPath -Name $fontRegName -Value $fileName -Force
+                Show-Success "$fileName instalado."
+            } catch {
+                Show-Warning "No se pudo instalar $fileName: $_"
+                $installed = $false
+            }
+        } else {
+            Show-Info "$fileName ya está instalado."
+        }
+    }
+    Remove-Item $tempFolder -Recurse -Force
+    if ($installed) {
+        Show-Success "Todas las variantes de MesloLGS NF instaladas."
     } else {
-        Show-Error "Script install.ps1 no encontrado: $installPath"
-        return $false
+        Show-Warning "Algunas fuentes pueden no haberse instalado. Instala manualmente si es necesario."
     }
 }
 
