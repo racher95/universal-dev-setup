@@ -659,7 +659,7 @@ function Install-MesloLGSFont {
                 Set-ItemProperty -Path $regPath -Name $fontRegName -Value $fileName -Force
                 Show-Success "$fileName instalado."
             } catch {
-                Show-Warning "No se pudo instalar $fileName: $_"
+                Show-Warning "No se pudo instalar ${fileName}: $_"
                 $installed = $false
             }
         } else {
