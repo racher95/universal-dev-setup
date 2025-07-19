@@ -1236,14 +1236,17 @@ main() {
     case "$SYSTEM" in
         "WSL")
             show_info "💡 ESPECÍFICO PARA WSL:"
-            show_info "• Configura Windows Terminal para usar 'MesloLGS NF'"
-            show_info "• Asegúrate de que VS Code use WSL como terminal por defecto"
+            show_info "• Configura Windows Terminal para usar 'MesloLGS NF' (Ajustes > Apariencia > Fuente)"
+            show_info "• En VS Code: Ajusta la fuente en settings.json: 'terminal.integrated.fontFamily': 'MesloLGS NF'"
+            show_info "• Si los iconos no se ven bien, revisa que la fuente esté instalada y seleccionada"
             show_info "• ARGOS usa chafa para imágenes ASCII"
             show_info "• Powerlevel10k funcionará correctamente"
-            # Pausa final para evitar cierre automático
+            # Pausa final robusta para evitar cierre automático
             echo
-            read -n 1 -s -r -p "Presiona cualquier tecla para cerrar..."
-            echo
+            echo -e "\n${YELLOW}⚡ La terminal se cerrará cuando presiones Enter. Si no ves la pausa, ejecuta este script manualmente desde una terminal interactiva.${NC}"
+            while true; do
+                read -r -p "Presiona Enter para cerrar..." _ && break
+            done
             ;;
         "macOS")
             show_info "💡 ESPECÍFICO PARA macOS:"
