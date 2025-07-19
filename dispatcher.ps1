@@ -277,8 +277,23 @@ function Install-WindowsTerminal {
         $wingetAvailable = Get-Command winget -ErrorAction SilentlyContinue
         if ($wingetAvailable) {
             Show-Info "Intentando instalar Windows Terminal con winget..."
-            & winget install --id Microsoft.WindowsTerminal -e --source msstore
-            Start-Sleep -Seconds 5
+            $wingetCmd = "winget install --id Microsoft.WindowsTerminal -e --source msstore --accept-package-agreements --accept-source-agreements"
+            $job = Start-Job -ScriptBlock { param($cmd) Invoke-Expression $cmd } -ArgumentList $wingetCmd
+            $timeout = 60 # segundos
+            $elapsed = 0
+            while ($job.State -eq 'Running' -and $elapsed -lt $timeout) {
+                Start-Sleep -Seconds 2
+                $elapsed += 2
+                if ($elapsed -eq 20) {
+                    Show-Info "La instalación puede requerir interacción. Si ves una ventana de instalación, acéptala o revisa la Microsoft Store."
+                }
+            }
+            if ($job.State -eq 'Running') {
+                Show-Warning "La instalación de Windows Terminal con winget está tardando demasiado. Puedes cancelar la ventana o instalar manualmente."
+                Stop-Job $job | Out-Null
+            }
+            Receive-Job $job | Out-Null
+            Remove-Job $job | Out-Null
             $installed = Get-AppxPackage -Name $terminalPackage -ErrorAction SilentlyContinue
             if ($installed) {
                 Show-Success "Terminal de Windows instalado correctamente con winget."
