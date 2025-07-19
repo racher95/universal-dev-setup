@@ -674,6 +674,50 @@ function Install-MesloLGSFont {
     }
 }
 
+function Set-WindowsTerminalFontFace {
+    Show-Step "Configurando fuente 'MesloLGS NF' en Windows Terminal..."
+    $settingsPath = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
+    if (-not (Test-Path $settingsPath)) {
+        Show-Warning "No se encontró settings.json de Windows Terminal en $settingsPath. ¿Está instalado el Terminal?"
+        return
+    }
+    # Backup
+    $backupPath = "$settingsPath.bak-$(Get-Date -Format 'yyyyMMddHHmmss')"
+    Copy-Item $settingsPath $backupPath -Force
+    Show-Info "Backup creado: $backupPath"
+    try {
+        $json = Get-Content $settingsPath -Raw | ConvertFrom-Json
+        # Cambiar fontFace en perfiles WSL y default
+        $changed = $false
+        if ($json.profiles) {
+            if ($json.profiles.defaults) {
+                $json.profiles.defaults.fontFace = "MesloLGS NF"
+                $changed = $true
+            }
+            if ($json.profiles.list) {
+                foreach ($profile in $json.profiles.list) {
+                    if ($profile.name -match "WSL|Ubuntu|Debian|openSUSE|Kali|Pengwin|Alpine|Arch|SUSE|Fedora") {
+                        $profile.fontFace = "MesloLGS NF"
+                        $changed = $true
+                    }
+                    if ($profile.name -eq "Windows PowerShell" -or $profile.name -eq "Command Prompt") {
+                        # Opcional: también puedes cambiar aquí si lo deseas
+                    }
+                }
+            }
+        }
+        if ($changed) {
+            $json | ConvertTo-Json -Depth 20 | Set-Content $settingsPath -Encoding UTF8
+            Show-Success "Fuente 'MesloLGS NF' configurada en Windows Terminal."
+        } else {
+            Show-Warning "No se encontraron perfiles WSL/Ubuntu en settings.json para modificar."
+        }
+    } catch {
+        Show-Error "Error al modificar settings.json: $_"
+        Show-Info "Puedes editar manualmente la fuente en la configuración de Windows Terminal."
+    }
+}
+
 # Funcion Principal
 function Main {
     Show-Banner
