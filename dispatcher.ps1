@@ -403,7 +403,7 @@ function Invoke-TerminalConfiguration {
         if ($wtAvailable -and $wtInstalled) {
             Show-Info "Usando Windows Terminal para mejor experiencia..."
             try {
-                Start-Process -FilePath "wt.exe" -ArgumentList "-p", "Ubuntu", "-d", "~/universal-dev-setup", "bash", "-c", "./install.sh --auto; exec bash" -WindowStyle Normal
+                Start-Process -FilePath "wt.exe" -ArgumentList "-p", "Ubuntu", "-d", "~/universal-dev-setup", "bash", "-c", "./install.sh --auto" -WindowStyle Normal
                 Show-Success "Windows Terminal abierto con instalacion automatica"
             } catch {
                 Show-Warning "Error con Windows Terminal: $_"
@@ -416,7 +416,7 @@ function Invoke-TerminalConfiguration {
         Show-Info "Usando terminal WSL predeterminado..."
         try {
             # Usar WSL directo para ejecutar install.sh automáticamente
-            Start-Process -FilePath "wsl.exe" -ArgumentList "-d", "Ubuntu", "bash", "-c", "cd ~/universal-dev-setup && ./install.sh --auto; exec bash" -WindowStyle Normal
+            Start-Process -FilePath "wsl.exe" -ArgumentList "-d", "Ubuntu", "bash", "-c", "cd ~/universal-dev-setup && ./install.sh --auto" -WindowStyle Normal
             Show-Success "Terminal WSL abierto con instalacion automatica (bash -c)"
         } catch {
             Show-Error "Error al abrir terminal WSL: $_"
