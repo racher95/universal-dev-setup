@@ -403,7 +403,7 @@ function Invoke-TerminalConfiguration {
         if ($wtAvailable -and $wtInstalled) {
             Show-Info "Usando Windows Terminal para mejor experiencia..."
             try {
-                Start-Process -FilePath "wt.exe" -ArgumentList "-p", "Ubuntu", "-d", "~/universal-dev-setup", "bash", "-c", "./install.sh --auto" -WindowStyle Normal
+                Start-Process -FilePath "wt.exe" -ArgumentList "-p", "Ubuntu", "bash", "-c", "cd ~/universal-dev-setup && ./install.sh --auto" -WindowStyle Normal
                 Show-Success "Windows Terminal abierto con instalacion automatica"
             } catch {
                 Show-Warning "Error con Windows Terminal: $_"
