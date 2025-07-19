@@ -687,21 +687,25 @@ function Set-WindowsTerminalFontFace {
     Show-Info "Backup creado: $backupPath"
     try {
         $json = Get-Content $settingsPath -Raw | ConvertFrom-Json
-        # Cambiar fontFace en perfiles WSL y default
         $changed = $false
         if ($json.profiles) {
             if ($json.profiles.defaults) {
-                $json.profiles.defaults.fontFace = "MesloLGS NF"
+                if ($null -eq $json.profiles.defaults.fontFace) {
+                    $json.profiles.defaults | Add-Member -MemberType NoteProperty -Name fontFace -Value "MesloLGS NF"
+                } else {
+                    $json.profiles.defaults.fontFace = "MesloLGS NF"
+                }
                 $changed = $true
             }
             if ($json.profiles.list) {
                 foreach ($profile in $json.profiles.list) {
                     if ($profile.name -match "WSL|Ubuntu|Debian|openSUSE|Kali|Pengwin|Alpine|Arch|SUSE|Fedora") {
-                        $profile.fontFace = "MesloLGS NF"
+                        if ($null -eq $profile.fontFace) {
+                            $profile | Add-Member -MemberType NoteProperty -Name fontFace -Value "MesloLGS NF"
+                        } else {
+                            $profile.fontFace = "MesloLGS NF"
+                        }
                         $changed = $true
-                    }
-                    if ($profile.name -eq "Windows PowerShell" -or $profile.name -eq "Command Prompt") {
-                        # Opcional: también puedes cambiar aquí si lo deseas
                     }
                 }
             }
