@@ -708,14 +708,21 @@ install_argos_system() {
     mkdir -p "$HOME/.local/share/argos"
     mkdir -p "$HOME/.config/argos"
 
-    # Copiar script portable
-    show_info "Instalando script ARGOS adaptativo v2.0..."
-    if [[ -f "$CONFIG_DIR/argos-fetch-portable-v2" ]]; then
-        cp "$CONFIG_DIR/argos-fetch-portable-v2" "$HOME/.local/bin/argos-fetch"
-        chmod +x "$HOME/.local/bin/argos-fetch"
+    # Instalar script ARGOS adaptativo v2.0...
+    if [[ $SYSTEM == "WSL" ]]; then
+        if [[ -f "$CONFIG_DIR/argosfetch-wsl.sh" ]]; then
+            cp "$CONFIG_DIR/argosfetch-wsl.sh" "$HOME/.local/bin/argosfetch-wsl"
+            chmod +x "$HOME/.local/bin/argosfetch-wsl"
+        else
+            show_error "Script argosfetch-wsl.sh no encontrado en $CONFIG_DIR"
+        fi
     else
-        show_error "Script argos-fetch-portable-v2 no encontrado en $CONFIG_DIR"
-        return 1
+        if [[ -f "$CONFIG_DIR/argos-fetch-portable-v2" ]]; then
+            cp "$CONFIG_DIR/argos-fetch-portable-v2" "$HOME/.local/bin/argos-fetch"
+            chmod +x "$HOME/.local/bin/argos-fetch"
+        else
+            show_error "Script argos-fetch-portable-v2 no encontrado en $CONFIG_DIR"
+        fi
     fi
 
     # Instalar imgcat para iTerm2 si es necesario

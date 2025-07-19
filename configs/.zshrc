@@ -89,7 +89,11 @@ if [ -f ~/.zsh_personal ]; then
 fi
 
 # Ejecuta el script épico híbrido ARGOS al iniciar la terminal
-ARGOS_SCRIPT="$HOME/.local/bin/argos-fetch"
+if grep -qiE 'microsoft|wsl' /proc/version 2>/dev/null; then
+    ARGOS_SCRIPT="$HOME/.local/bin/argosfetch-wsl"
+else
+    ARGOS_SCRIPT="$HOME/.local/bin/argos-fetch"
+fi
 if [[ -x "$ARGOS_SCRIPT" ]]; then
     # Solo ejecutar en terminales interactivas y si no se ha mostrado antes
     if [[ $- == *i* ]] && [[ -z $ARGOS_SHOWN ]]; then
