@@ -263,6 +263,73 @@ function Get-PostWSLInstallChoice {
     } while ($true)
 }
 
+function Install-WindowsTerminal {
+    Show-Step "Instalando terminal de Windows..."
+    try {
+        $terminalPackage = "Microsoft.WindowsTerminal"
+        $installed = Get-AppxPackage -Name $terminalPackage -ErrorAction SilentlyContinue
+        if ($installed) {
+            Show-Success "Terminal de Windows ya está instalado."
+            return $true
+        }
+
+        # Intentar instalar con winget si está disponible
+        $wingetAvailable = Get-Command winget -ErrorAction SilentlyContinue
+        if ($wingetAvailable) {
+            Show-Info "Intentando instalar Windows Terminal con winget..."
+            & winget install --id Microsoft.WindowsTerminal -e --source msstore
+            Start-Sleep -Seconds 5
+            $installed = Get-AppxPackage -Name $terminalPackage -ErrorAction SilentlyContinue
+            if ($installed) {
+                Show-Success "Terminal de Windows instalado correctamente con winget."
+                return $true
+            } else {
+                Show-Warning "No se pudo instalar automáticamente con winget."
+            }
+        }
+
+        # Si winget falla, abrir la Microsoft Store en la página de Windows Terminal
+        Show-Info "Abriendo Microsoft Store para instalar Windows Terminal manualmente..."
+        Start-Process "ms-windows-store://pdp/?ProductId=9N0DX20HK701"
+        Show-Warning "Por favor, instala Windows Terminal manualmente desde la ventana de la tienda que se abrió."
+        Show-Info "Si la tienda no se abre, visita: https://aka.ms/terminal-preview"
+        return $false
+    } catch {
+        Show-Error "Error al instalar el terminal de Windows: $_"
+        Show-Info "Instala manualmente desde: https://aka.ms/terminal-preview"
+        return $false
+    }
+}
+
+function Ensure-GitInstalled {
+    Show-Step "Verificando instalación de Git..."
+    $gitAvailable = Get-Command git -ErrorAction SilentlyContinue
+    if ($gitAvailable) {
+        Show-Success "Git ya está instalado."
+        return $true
+    }
+    Show-Info "Instalando Git..."
+    try {
+        $wingetAvailable = Get-Command winget -ErrorAction SilentlyContinue
+        if ($wingetAvailable) {
+            & winget install --id Git.Git -e --source winget
+            if ($LASTEXITCODE -eq 0) {
+                Show-Success "Git instalado correctamente."
+                return $true
+            } else {
+                Show-Warning "Error al instalar Git con winget."
+            }
+        }
+        Show-Warning "No se pudo instalar Git automáticamente. Instálalo manualmente desde https://git-scm.com/download/win"
+        return $false
+    } catch {
+        Show-Error "Error al instalar Git: $_"
+        Show-Info "Instala manualmente desde: https://git-scm.com/download/win"
+        return $false
+    }
+}
+
+# Funciones de Configuracion
 function Invoke-TerminalConfiguration {
     Show-Step "Iniciando configuracion completa de WSL con Windows Terminal..."
 
@@ -291,6 +358,12 @@ function Invoke-TerminalConfiguration {
     if (-not $vscodeConfigured) {
         Show-Warning "VS Code no pudo ser configurado completamente. Continuando..."
     }
+    # Paso 2.5: Instalar Git
+    Show-Info "Paso 2.5: Verificando e instalando Git..."
+    $gitInstalled = Ensure-GitInstalled
+    if (-not $gitInstalled) {
+        Show-Warning "Git no pudo ser instalado automáticamente."
+    }
 
     # Paso 3: Copiar proyecto a WSL
     Show-Info "Paso 3: Copiando proyecto a entorno WSL..."
@@ -310,15 +383,10 @@ function Invoke-TerminalConfiguration {
     Show-Info "Paso 4: Abriendo Windows Terminal en WSL Ubuntu..."
     Show-Info "Se ejecutara install.sh automaticamente desde ~/universal-dev-setup"
     Show-Info "Esto instalara y configurara todas las herramientas de desarrollo"
-
     try {
-        # Verificar si Windows Terminal esta disponible
         $wtAvailable = Get-Command "wt.exe" -ErrorAction SilentlyContinue
-
         if ($wtAvailable -and $wtInstalled) {
             Show-Info "Usando Windows Terminal para mejor experiencia..."
-
-            # Usar Windows Terminal con perfil WSL
             try {
                 Start-Process -FilePath "wt.exe" -ArgumentList "-p", "Ubuntu", "-d", "~/universal-dev-setup", "bash", "-c", "./install.sh --auto; exec bash" -WindowStyle Normal
                 Show-Success "Windows Terminal abierto con instalacion automatica"
@@ -331,25 +399,16 @@ function Invoke-TerminalConfiguration {
         }
     } catch {
         Show-Info "Usando terminal WSL predeterminado..."
-
         try {
-            # Usar WSL directo con --cd
-            Start-Process -FilePath "wsl.exe" -ArgumentList "-d", "Ubuntu", "--cd", "~/universal-dev-setup", "-e", "bash", "-c", "./install.sh --auto; exec bash" -WindowStyle Normal
-            Show-Success "Terminal WSL abierto con instalacion automatica"
+            # Usar WSL directo para ejecutar install.sh automáticamente
+            Start-Process -FilePath "wsl.exe" -ArgumentList "-d", "Ubuntu", "bash", "-c", "cd ~/universal-dev-setup && ./install.sh --auto; exec bash" -WindowStyle Normal
+            Show-Success "Terminal WSL abierto con instalacion automatica (bash -c)"
         } catch {
-            Show-Warning "Error con --cd: $_"
-
-            try {
-                # Metodo alternativo con bash -c
-                Start-Process -FilePath "wsl.exe" -ArgumentList "-d", "Ubuntu", "bash", "-c", "cd ~/universal-dev-setup && ./install.sh --auto; exec bash" -WindowStyle Normal
-                Show-Success "Terminal WSL abierto con instalacion automatica (metodo alternativo)"
-            } catch {
-                Show-Error "Error al abrir terminal WSL: $_"
-                Show-Info "Por favor, abre manualmente WSL Ubuntu y ejecuta:"
-                Show-Info "   cd ~/universal-dev-setup"
-                Show-Info "   ./install.sh --auto"
-                return $false
-            }
+            Show-Error "Error al abrir terminal WSL: $_"
+            Show-Info "Por favor, abre manualmente WSL Ubuntu y ejecuta:"
+            Show-Info "   cd ~/universal-dev-setup"
+            Show-Info "   ./install.sh --auto"
+            return $false
         }
     }
 
@@ -383,35 +442,6 @@ function Invoke-TerminalConfiguration {
     Show-Info "Puedes cerrar esta ventana de PowerShell cuando termine la instalacion"
 
     return $true
-}
-
-function Install-WindowsTerminal {
-    Show-Step "Instalando terminal de Windows..."
-    try {
-        # Verificar si ya está instalado
-        $terminalPackage = "Microsoft.WindowsTerminal"
-        $installed = Get-AppxPackage -Name $terminalPackage -ErrorAction SilentlyContinue
-        if ($installed) {
-            Show-Success "Terminal de Windows ya está instalado."
-            return
-        }
-
-        # Intentar instalar desde Microsoft Store
-        Show-Info "Intentando instalar desde Microsoft Store..."
-        Start-Process "ms-windows-store://pdp/?ProductId=9N0DX20HK701" -Wait
-
-        # Verificar si se instaló
-        Start-Sleep -Seconds 5
-        $installed = Get-AppxPackage -Name $terminalPackage -ErrorAction SilentlyContinue
-        if ($installed) {
-            Show-Success "Terminal de Windows instalado correctamente."
-        } else {
-            Show-Warning "No se pudo verificar la instalación automática. Instala manualmente desde Microsoft Store."
-        }
-    } catch {
-        Show-Error "Error al instalar el terminal de Windows: $_"
-        Show-Info "Instala manualmente desde: https://aka.ms/terminal-preview"
-    }
 }
 
 function Configure-VSCodeForWSL {
