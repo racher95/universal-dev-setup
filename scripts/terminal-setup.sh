@@ -287,7 +287,9 @@ install_fonts() {
 
                 if [[ ! -f "$font_dir/$filename" ]]; then
                     show_info "Descargando $filename..."
-                    wget -q "$url" -O "$font_dir/$filename"
+                    wget -q "$url" -O "$font_dir/$filename" || {
+                        show_warning "No se pudo descargar $filename. Intenta descargarlo manualmente desde $url"
+                    }
                 fi
             done
 
@@ -295,7 +297,13 @@ install_fonts() {
             show_info "Actualizando cache de fuentes..."
             fc-cache -f -v
 
-            show_success "✅ Fuentes instaladas correctamente"
+            # Verificar si la fuente se instaló correctamente
+            if fc-list | grep -qi 'MesloLGS NF'; then
+                show_success "✅ Fuentes MesloLGS NF instaladas y detectadas"
+            else
+                show_warning "⚠️  Las fuentes MesloLGS NF no se detectaron en el sistema. Configura manualmente o revisa permisos."
+            fi
+
             show_info "💡 Configura tu terminal para usar 'MesloLGS NF'"
             ;;
     esac
@@ -1232,6 +1240,10 @@ main() {
             show_info "• Asegúrate de que VS Code use WSL como terminal por defecto"
             show_info "• ARGOS usa chafa para imágenes ASCII"
             show_info "• Powerlevel10k funcionará correctamente"
+            # Pausa final para evitar cierre automático
+            echo
+            read -n 1 -s -r -p "Presiona cualquier tecla para cerrar..."
+            echo
             ;;
         "macOS")
             show_info "💡 ESPECÍFICO PARA macOS:"
